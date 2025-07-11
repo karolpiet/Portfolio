@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analiza Sieciowa | Karol Pietruszka</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">
+      <img src="logo_tree.svg" alt="Logo" class="logo-icon">
+      <span class="logo-text">Karol Pietruszka</span>
+    </div>
+  </nav>
+
+  <div class="hero-section">
+    <div class="image-container">
+      <img id="mapImage" src="rower_wroclaw.jpg" alt="Mapa dostępności rowerowej" class="map-image">
+      <div class="enlarge-icon" onclick="openModal()">
+        <i class="fas fa-expand"></i>
+      </div>
+    </div>
+    <div id="imageModal" class="modal">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <img class="modal-content" id="modalImage">
+    </div>
+  </div>
+
+  <main class="project-container">
+    <section class="project-description">
+      <h2>Dostępność rowerowa do dworców kolejowych we Wrocławiu</h2>
+      <p>Analiza sieciowa prezentuje zasięg dojazdu rowerem do głównych dworców kolejowych we Wrocławiu...</p>
+      <!-- dalsza treść jak w poprzedniej wersji -->
+    </section>
+
+    <aside class="project-stats">
+      <section class="stats-section">
+        <h2><i class="fas fa-chart-line"></i> Kluczowe Informacje</h2>
+        <!-- statystyki -->
+      </section>
+
+      <section class="tech-section">
+        <h2><i class="fas fa-cogs"></i> Szczegóły Techniczne</h2>
+        <!-- dane techniczne -->
+      </section>
+    </aside>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coastal Flood Risk Analysis | Karol Pietruszka</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="flood_styles.css">
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+</head>
+<body>
+  <!-- Navigation - bez zmian -->
+  <nav class="navbar">
+    <div class="logo">
+      <img src="../../logo_tree.svg" alt="Logo" class="logo-icon">
+      <span class="logo-text">Karol Pietruszka</span>
+    </div>
+  </nav>
+
+  <div class="hero-section">
+  <div class="image-container">
+    <img id="mapImage" src="Data/flood_risk.jpg" alt="Mapa" class="map-image">
+    <div class="enlarge-icon" onclick="openModal()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+      </svg>
+    </div>
+  </div>
+  
+  <!-- Modal -->
+  <div id="imageModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImage">
+  </div>
+</div>
+
+  <!-- Content Sections - bez zmian -->
+  <div class="project-container">
+    <!-- Left column - Project description -->
+    <div class="project-description">
+      <h2>Population Estimation in Areas at Risk of Flooding Due to Sea Level Rise</h2>
+      <div class="description-content">
+        <p>This analysis estimates the population at risk in coastal areas of Poland vulnerable to flooding from a potential 5-meter sea level rise. Using GIS techniques and elevation data, the project identifies vulnerable zones and calculates affected populations.</p>
+        
+        <h3>Methodology</h3>
+        <p>The analysis was conducted using the following workflow:</p>
+        <ol>
+          <li><strong>Data Acquisition:</strong> 
+            <ul>
+              <li>European Digital Elevation Model (EU-DEM) v1.1 from Copernicus Land Monitoring Service</li>
+              <li>Global Human Settlement Layer (population density data) from JRC</li>
+            </ul>
+          </li>
+          <li><strong>Data Processing:</strong>
+            <ul>
+              <li>Projected data to WGS 1984 UTM Zone 34N coordinate system</li>
+              <li>Clipped to study area extent</li>
+            </ul>
+          </li>
+          <li><strong>Analysis:</strong>
+            <ul>
+              <li>Identified land areas below 0m elevation (current sea level)</li>
+              <li>Identified areas below 5m elevation (potential flood zone)</li>
+              <li>Combined elevation classes to create risk zones</li>
+              <li>Calculated population statistics for each zone</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h3>Key Findings</h3>
+        <p>The analysis reveals significant population vulnerability to sea level rise:</p>
+        <ul>
+          <li>Areas currently below sea level (depressions) contain 104,333 inhabitants</li>
+          <li>Areas between 0-5m elevation contain 209,303 inhabitants</li>
+          <li>Total population at risk from 5m sea level rise: <strong>313,636 people</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right column - Statistics and technical details -->
+    <div class="project-stats">
+      <!-- Risk statistics -->
+      <div class="stats-section">
+        <h2><i class="fas fa-chart-bar"></i> Risk Statistics</h2>
+        <div class="stat-card high-risk">
+          <h3>High Risk Zone (0-5m)</h3>
+          <p class="stat-value">209,303</p>
+          <p class="stat-detail">229.6 persons/km² across 911.6 km²</p>
+        </div>
+        <div class="stat-card current-risk">
+          <h3>Current Flood Zone (below 0m)</h3>
+          <p class="stat-value">104,333</p>
+          <p class="stat-detail">73.5 persons/km² across 1,419.5 km²</p>
+        </div>
+        <div class="stat-card total-risk">
+          <h3>Total At-Risk Population</h3>
+          <p class="stat-value">313,636</p>
+          <p class="stat-detail">Combined flood risk area</p>
+        </div>
+      </div>
+
+      <!-- Technical details -->
+      <div class="tech-section">
+        <h2><i class="fas fa-cogs"></i> Technical Details</h2>
+        <div class="tech-card">
+          <h3>Software & Tools</h3>
+          <ul>
+            <li>ArcGIS Pro</li>
+            <li>Spatial Analyst Tools</li>
+            <li>Raster Calculator</li>
+            <li>Zonal Statistics</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h3>Data Sources</h3>
+          <ul>
+            <li>EU-DEM v1.1 (Copernicus)</li>
+            <li>Global Human Settlement Layer (JRC)</li>
+            <li>WGS 1984 UTM Zone 34N</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Navbar scroll effect
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > 50) {
+        document.querySelector('.navbar').classList.add('scrolled');
+      } else {
+        document.querySelector('.navbar').classList.remove('scrolled');
+      }
+    });
+  </script>
+</body>
+</html>

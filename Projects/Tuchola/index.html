@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tuchola Forest Analysis | Karol Pietruszka</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <link rel="stylesheet" href="tuchola_styles.css">
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico" />
+  <link rel="shortcut icon" href="../../favicon.ico" />
+
+
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="logo">
+      <img src="../../logo_tree.svg" alt="Logo" class="logo-icon">
+      <span class="logo-text">Karol Pietruszka</span>
+    </div>
+  </nav>
+
+  <!-- Main Map -->
+  <div id="main-map"></div>
+  <div class="map-overlay"></div>
+
+ 
+  <!-- Content Sections -->
+  <div class="project-container">
+  <!-- Left column - Project description -->
+  <div class="project-description">
+    <h1>Monitoring Land Cover Changes in Bory Tucholskie After the 2017 Windstorm</h1>
+    <div class="description-content">
+      <p>Location: Przymuszewo Forest District, Bory Tucholskie, Poland
+Software: ERDAS Imagine
+Data sources: Sentinel-2 satellite imagery (2015, 2019)
+
+This project involved a detailed analysis of land cover changes in the Bory Tucholskie region, which suffered extensive forest damage due to a severe windstorm in 2017. The main objective was to detect deforestation and forest succession between 2015 and 2019 using satellite imagery and remote sensing techniques.</p>
+       <p>Key tasks:</p> 
+      <ul>
+        <li>Data preprocessing: Created multispectral composites from Sentinel-2 imagery (2015 and 2019) and clipped the images to the forest district boundary.</li>
+        <li>Land cover classification:
+Performed supervised classification using training samples based on four land cover classes: forest, agricultural/low vegetation areas, built-up areas, and water bodies. The classification was conducted using the maximum likelihood algorithm, and results were aggregated into two main categories: forest and non-forest.</li>
+        <li>Change detection – qualitative approach:
+Applied post-classification comparison to identify areas of deforestation, afforestation, and unchanged land. Compared results with Hansen et al.’s Global Forest Change dataset.</li>
+        <li>Change detection – quantitative approach:
+Calculated NDVI values for both years and generated an NDVI difference map. Applied thresholding via a graphical model in ERDAS Model Maker to classify areas with significant vegetation loss or gain. </li>
+        <li>Comparison of methods:
+Compared both change detection approaches to highlight consistent results as well as discrepancies caused by different vegetation dynamics (e.g., coniferous forest replaced by high-NDVI grassland). </li>
+      </ul>
+      <p>Outcome:</p>
+      
+      <p>The project successfully identified environmental changes caused by natural disaster and vegetation dynamics, showcasing the use of remote sensing and GIS techniques in environmental monitoring and land management.</p>
+        
+      </ul>
+    </div>
+  </div>
+
+  <!-- Right column - Statistics and technical details -->
+  <div class="project-stats">
+    <!-- Change statistics -->
+    <div class="stats-section">
+      <h2><i class="fas fa-chart-pie"></i> Change Statistics</h2>
+      <div class="stat-card loss">
+        <h3>Forest Loss</h3>
+        <p class="stat-value">12.5%</p>
+        <p class="stat-detail">Mostly in southern sectors</p>
+      </div>
+      <div class="stat-card gain">
+        <h3>Forest Gain</h3>
+        <p class="stat-value">8.3%</p>
+        <p class="stat-detail">Natural regeneration areas</p>
+      </div>
+      <div class="stat-card stable">
+        <h3>Stable Forest</h3>
+        <p class="stat-value">79.2%</p>
+        <p class="stat-detail">Core protected zones</p>
+      </div>
+    </div>
+
+    <!-- Technical details -->
+    <div class="tech-section">
+      <h2><i class="fas fa-cogs"></i> Technical Details</h2>
+      <div class="tech-card">
+        <h3>Data Sources</h3>
+        <ul>
+          <li>Sentinel-2 MSI L2A</li>
+          <li>Forest Management Maps</li>
+          <li>Field Validation Data</li>
+        </ul>
+      </div>
+      <div class="tech-card">
+        <h3>Methodology</h3>
+        <ul>
+          <li>Random Forest Classification</li>
+          <li>NDVI Time-Series Analysis</li>
+          <li>Post-Classification Comparison</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="tuchola_scripts.js"></script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+:root {
+  --forest-green: #1d4e1d;
+  --pine-green: #2e6d2e;
+  --tech-blue: #00c6ff;
+  --light-text: #f8f9fa;
+  --loss-color: #d73027;
+  --gain-color: #1a9850;
+  --stable-color: #ffffbf;
+}
+
+body {
+  font-family: 'Raleway', sans-serif;
+  margin: 0;
+  color: #333;
+  line-height: 1.6;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 5%;
+  background: rgba(29, 78, 29, 0.95);
+  color: var(--light-text);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s ease;
+}
+
+.navbar.scrolled {
+  padding: 0.8rem 5%;
+  background: rgba(29, 78, 29, 0.98);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  gap: 12px;
+  height: 55px; /* Stała wysokość dla wyrównania */
+}
+
+.logo-icon {
+  width: 55px;
+  height: 55px;
+  filter: drop-shadow(0 0 6px var(--tech-glow));
+  animation: techPulse 3s infinite alternate;
+}
+
+.logo-text {
+  font-size: 1.8rem;
+  color: var(--light-text);
+  line-height: 1;
+  margin: 0; /* Usuwa domyślne marginesy */
+  padding: 0; /* Usuwa domyślne paddingi */
+  display: inline-flex;
+  align-items: center;
+}
+
+#main-map {
+  height: 70vh;
+  width: calc(100% - 40px); /* Odstępy boczne */
+  margin: 100px auto 0; /* Większy margines górny i wyśrodkowanie */
+  border-radius: 15px; /* Zaokrąglone rogi */
+  overflow: hidden; /* Ukrywa "wystające" elementy */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.1);
+  display: block; /* Zapewnia poprawne marginy */
+  position: relative; /* Dla overlay */
+  z-index: 1;
+}
+/*LEGENDA*/
+.leaflet-control .legend {
+  background: white;
+  padding: 10px;
+  font-size: 14px;
+  line-height: 18px;
+  color: #333;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+.info.legend {
+  background: rgba(255, 255, 255, 0.9); /* białe tło z przezroczystością */
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  border-radius: 3px;
+}
+/* tu sie kończy legenda */
+
+.project-container {
+  display: grid;
+  grid-template-columns: 3fr 1fr; /* Zmieniamy proporcje na 3:1 */
+  gap: 40px;
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.project-description {
+  background: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+}
+
+.project-description h1 {
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.description-content {
+  line-height: 1.8;
+}
+
+.description-content ul {
+  margin: 15px 0;
+  padding-left: 20px;
+}
+
+.description-content li {
+  margin-bottom: 8px;
+}
+
+.project-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  /* Dodajemy maksymalną szerokość jeśli potrzebne */
+  max-width: 300px; /* Możesz dostosować tę wartość */
+}
+
+.stats-section, .tech-section {
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+}
+
+.stats-section h2, .tech-section h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-card {
+  padding: 15px;
+  margin-bottom: 15px;
+  border-left: 4px solid;
+  border-radius: 5px;
+}
+
+.stat-card.loss {
+  border-color: #eb4539ff;
+  background: rgba(235, 69, 57, 0.05);
+}
+
+.stat-card.gain {
+  border-color: #fe8be5ff;
+  background: rgba(254, 139, 229, 0.05);
+}
+
+.stat-card.stable {
+  border-color: #60cfa1ff;
+  background: rgba(96, 207, 161, 0.05);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 5px 0;
+}
+
+.stat-card.loss .stat-value { color: #eb4539ff; }
+.stat-card.gain .stat-value { color: #fe8be5ff; }
+.stat-card.stable .stat-value { color: #60cfa1ff; }
+
+.stat-detail {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.tech-card {
+  margin-bottom: 20px;
+}
+
+.tech-card h3 {
+  color: #3498db;
+  margin-bottom: 10px;
+}
+
+.tech-card ul {
+  padding-left: 20px;
+}
+
+.tech-card li {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+  .project-container {
+    grid-template-columns: 1fr;
+  }
+}
