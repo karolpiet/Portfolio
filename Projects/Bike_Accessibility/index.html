@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Analiza Sieciowa | Karol Pietruszka</title>
+  <title>Network Analysis | Bicycle Accessibility in Wrocław | Karol Pietruszka</title>
   <link rel="stylesheet" href="Bike_styles.css">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <nav class="navbar">
     <div class="logo">
-      <img src="logo_tree.svg" alt="Logo" class="logo-icon">
+      <img src="../../logo_tree.svg" alt="Logo" class="logo-icon">
       <span class="logo-text">Karol Pietruszka</span>
     </div>
   </nav>
 
   <div class="hero-section">
     <div class="image-container">
-      <img id="mapImage" src="data/wroclaw.jpg" alt="Mapa dostępności rowerowej" class="map-image">
+      <img id="mapImage" src="Data/wroclaw.jpg" alt="Bicycle accessibility map of Wrocław" class="map-image">
       <div class="enlarge-icon" onclick="openModal()">
         <i class="fas fa-expand"></i>
       </div>
@@ -31,25 +31,119 @@
   </div>
 
   <main class="project-container">
-    <section class="project-description">
-      <h2>Dostępność rowerowa do dworców kolejowych we Wrocławiu</h2>
-      <p>Analiza sieciowa prezentuje zasięg dojazdu rowerem do głównych dworców kolejowych we Wrocławiu...</p>
-      <!-- dalsza treść jak w poprzedniej wersji -->
-    </section>
-
-    <aside class="project-stats">
-      <section class="stats-section">
-        <h2><i class="fas fa-chart-line"></i> Kluczowe Informacje</h2>
-        <!-- statystyki -->
+    <article class="project-content">
+      <section class="intro-section">
+        <h1>Bicycle Accessibility to Railway Stations in Wrocław</h1>
+        <p class="lead">A network analysis showing the bicycle travel range to main railway stations in Wrocław within 5, 10, and 15 minutes</p>
       </section>
 
-      <section class="tech-section">
-        <h2><i class="fas fa-cogs"></i> Szczegóły Techniczne</h2>
-        <!-- dane techniczne -->
+      <section class="content-section" id="introduction">
+        <h2><i class="fas fa-map-marked-alt"></i> Introduction</h2>
+        <p>Wrocław, with its unique geography and numerous watercourses, presents a fascinating subject for analyzing bicycle accessibility to various locations, including railway stations. I chose Wrocław for this analysis due to its significance as a major Polish city and growing interest among cyclists.</p>
+        <p>Cyclists have become an integral part of Wrocław's urban landscape, increasingly engaging in sustainable and eco-friendly transportation. Railway stations serve as key destinations for cyclists, functioning as transit hubs and departure points for train journeys.</p>
+        <div class="highlight-box">
+          <h3>Research Objective</h3>
+          <p>Optimizing bicycle access to railway stations is crucial for improving residents' quality of life and reducing traffic congestion and greenhouse gas emissions in the city.</p>
+        </div>
       </section>
-    </aside>
+
+      <section class="content-section" id="methods">
+        <h2><i class="fas fa-microscope"></i> Methods</h2>
+        <h3>Data Sources</h3>
+        <p>For this analysis, I used geodatabases and OpenStreetMap data obtained from <a href="https://download.bbbike.org/osm/bbbike/" target="_blank">BBBike</a>. Data on railway station locations were filtered from the "Wroclaw_osm_pt" layer, selecting records where the "railway" column was marked as "station".</p>
+        
+        <h3>Analytical Tools</h3>
+        <p>The analysis was conducted using the "Service Area" tool in ArcGIS Pro. This tool is designed for analyzing road or route networks, allowing the determination of areas reachable within specified travel times or distances from selected destination points within a given network.</p>
+        
+        <div class="method-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <p>Preparation of road network data and station locations</p>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <p>Configuration of analysis parameters (direction: Toward facilities, geometry: Dissolve)</p>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <p>Conducting analysis for different travel times (5, 10, 15 minutes)</p>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <p>Visualization of results on maps</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section" id="results">
+        <h2><i class="fas fa-chart-bar"></i> Results</h2>
+        <p>The analysis produced maps showing the bicycle travel range to railway stations in Wrocław within specified timeframes:</p>
+        
+        <div class="gallery">
+          <div class="gallery-item">
+            <img src="Data/mapa_5min.jpg" alt="5-minute range" onclick="openGalleryModal(this)">
+            <p>5-minute range</p>
+          </div>
+          <div class="gallery-item">
+            <img src="Data/mapa_10min.jpg" alt="10-minute range" onclick="openGalleryModal(this)">
+            <p>10-minute range</p>
+          </div>
+          <div class="gallery-item">
+            <img src="Data/mapa_15min.jpg" alt="15-minute range" onclick="openGalleryModal(this)">
+            <p>15-minute range</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section" id="discussion">
+        <h2><i class="fas fa-comments"></i> Discussion</h2>
+        <p>The network analysis of bicycle access to railway stations in Wrocław provided valuable insights regarding accessibility and travel range within specified timeframes. This study offers a clear picture of several key aspects affecting cyclist mobility in the city.</p>
+        
+        <h3>Key Findings</h3>
+        <ul class="conclusions-list">
+          <li><i class="fas fa-check-circle"></i> Identification of areas accessible within 5, 10, and 15 minutes by bicycle</li>
+          <li><i class="fas fa-check-circle"></i> Detection of areas requiring bicycle infrastructure improvements</li>
+          <li><i class="fas fa-check-circle"></i> Differentiation between city districts regarding accessibility</li>
+        </ul>
+        
+        <h3>Limitations and Further Research</h3>
+        <p>To enhance this analysis, future studies could consider:</p>
+        <ul>
+          <li>Route elevation profiles</li>
+          <li>Different cyclist speeds</li>
+          <li>Traffic conditions</li>
+          <li>Peak hours</li>
+        </ul>
+      </section>
+
+      <section class="content-section" id="summary">
+        <h2><i class="fas fa-clipboard-check"></i> Summary</h2>
+        <div class="summary-box">
+          <p>The analysis concludes that Wrocław's bicycle infrastructure is well-developed. The network of bicycle routes enables quick access to railway stations, suggesting that Wrocław invests in cycling infrastructure and strives to create a cyclist-friendly environment.</p>
+          <div class="benefits-grid">
+            <div class="benefit-item">
+              <i class="fas fa-traffic-light"></i>
+              <h4>Traffic Reduction</h4>
+              <p>Decreased number of cars on the roads</p>
+            </div>
+            <div class="benefit-item">
+              <i class="fas fa-leaf"></i>
+              <h4>Ecology</h4>
+              <p>Environmentally friendly sustainable transport</p>
+            </div>
+            <div class="benefit-item">
+              <i class="fas fa-heartbeat"></i>
+              <h4>Health</h4>
+              <p>Promotion of healthy lifestyle</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </article>
   </main>
 
-  <script src="script.js"></script>
+  
+
+  <script src="Bike_script.js"></script>
 </body>
 </html>
