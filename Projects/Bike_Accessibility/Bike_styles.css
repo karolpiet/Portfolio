@@ -1,11 +1,11 @@
 :root {
   --ocean-blue: #1a5f7a;
   --deep-blue: #003366;
-  --risk-orange: #e67e22;
-  --current-red: #e74c3c;
-  --safe-green: #2ecc71;
+  --sky-blue: #57c5b6;
+  --light-blue: #d9f0ff;
   --light-text: #f8f9fa;
   --dark-text: #333333;
+  --gray-border: #e0e0e0;
 }
 
 body {
@@ -123,6 +123,18 @@ body {
   animation: zoom 0.3s;
 }
 
+.gallery-modal .modal-content {
+  width: auto;
+  max-height: 80vh;
+}
+
+.modal-caption {
+  text-align: center;
+  color: #fff;
+  padding: 10px 0;
+  font-size: 1.2rem;
+}
+
 @keyframes zoom {
   from { transform: scale(0.1); }
   to { transform: scale(1); }
@@ -144,79 +156,167 @@ body {
 }
 
 .project-container {
-  display: flex;
-  padding: 3rem 5%;
-  gap: 2rem;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  flex-wrap: wrap;
+  padding: 3rem 5%;
 }
 
-.project-description {
-  flex: 2;
+.project-content {
+  width: 100%;
 }
 
-.project-stats {
-  flex: 1;
-}
-
-h2, h3 {
+h1, h2, h3, h4 {
   font-family: 'Montserrat', sans-serif;
   color: var(--deep-blue);
 }
 
-.stats-section, .tech-section {
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+  color: var(--ocean-blue);
+}
+
+h2 {
+  font-size: 1.8rem;
+  margin: 2rem 0 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--sky-blue);
+}
+
+h3 {
+  font-size: 1.4rem;
+  margin: 1.5rem 0 1rem;
+}
+
+.lead {
+  font-size: 1.2rem;
+  color: #555;
   margin-bottom: 2rem;
 }
 
-.stat-card {
+.content-section {
+  margin-bottom: 3rem;
+}
+
+.highlight-box {
+  background-color: var(--light-blue);
+  border-left: 4px solid var(--ocean-blue);
   padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  color: white;
+  margin: 1.5rem 0;
+  border-radius: 0 4px 4px 0;
 }
 
-.high-risk {
-  background-color: var(--risk-orange);
+.method-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.5rem 0;
 }
 
-.current-risk {
-  background-color: var(--current-red);
-}
-
-.total-risk {
-  background-color: var(--deep-blue);
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0.5rem 0;
-}
-
-.stat-detail {
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.tech-card {
+.step {
+  flex: 1 1 calc(50% - 1rem);
+  min-width: 200px;
   background: white;
   padding: 1.5rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
-@media (max-width: 768px) {
-  .project-container {
-    flex-direction: column;
-  }
-
-  .hero-section {
-    height: auto;
-  }
-
-  .hero-overlay h1 {
-    font-size: 2rem;
-  }
+.step-number {
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  width: 40px;
+  height: 40px;
+  background: var(--ocean-blue);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.2rem;
 }
+
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.gallery-item {
+  flex: 1 1 calc(33.333% - 1.5rem);
+  min-width: 250px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.gallery-item:hover {
+  transform: translateY(-5px);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.gallery-item p {
+  text-align: center;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.conclusions-list {
+  list-style: none;
+  padding: 0;
+}
+
+.conclusions-list li {
+  margin-bottom: 0.8rem;
+  padding-left: 1.8rem;
+  position: relative;
+}
+
+.conclusions-list li i {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  color: var(--sky-blue);
+}
+
+.summary-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.benefit-item {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--light-blue);
+  border-radius: 8px;
+}
+
+.benefit-item i {
+  font-size: 2rem;
+  color: var(--ocean-blue);
+  margin-bottom: 1rem;
+}
+
+.benefit-item h4 {
+  margin: 0.5rem 0;
+}
+
