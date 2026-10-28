@@ -1,0 +1,163 @@
+/* ===================================================== */
+/* MOTYW "MAPA TOPOGRAFICZNA" – nadpisuje style.css       */
+/* ===================================================== */
+:root {
+  --forest-green: #1f3a2e;   /* sosna */
+  --pine-green: #2c4f3e;
+  --leaf-green: #6b8f5e;     /* mech */
+  --tech-blue: #c8892f;      /* ochra – jedyny akcent */
+  --tech-glow: transparent;
+  --light-bg: #f4f0e6;       /* papier mapy */
+  --dark-text: #22302a;
+  --light-text: #f1ece0;
+  --contour: rgba(31, 58, 46, 0.07);
+}
+
+/* Poziomice jako tło całej strony */
+body {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  background-color: var(--light-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cg fill='none' stroke='%231f3a2e' stroke-opacity='0.07' stroke-width='1.2'%3E%3Cpath d='M-50 120 C 80 60 180 160 300 110 S 520 40 650 100'/%3E%3Cpath d='M-50 160 C 90 100 190 200 300 150 S 520 80 650 140'/%3E%3Cpath d='M-50 200 C 100 145 200 240 300 190 S 520 125 650 180'/%3E%3Cellipse cx='420' cy='380' rx='120' ry='70'/%3E%3Cellipse cx='420' cy='380' rx='85' ry='48'/%3E%3Cellipse cx='420' cy='380' rx='50' ry='27'/%3E%3Cellipse cx='420' cy='380' rx='18' ry='9'/%3E%3Cpath d='M-50 470 C 70 420 160 520 260 480 S 420 560 650 500'/%3E%3Cpath d='M-50 520 C 80 470 170 570 270 530 S 430 610 650 550'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 600px 600px;
+}
+.background-effect, .section:after, .dark-section:before { display: none; }
+
+h1, h2, h3, .logo, .cv-header h3, .hero h1, .section h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  letter-spacing: 0;
+}
+
+/* Nawigacja */
+.navbar, .navbar.scrolled {
+  background: rgba(31, 58, 46, 0.96);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+.logo-icon { animation: none; filter: none; }
+.nav-links a { font-weight: 500; letter-spacing: 0.3px; }
+.nav-links a::after { box-shadow: none; height: 1px; }
+
+/* Flagi bez poświaty */
+.lang-btn:hover, .lang-btn.active {
+  transform: none;
+  box-shadow: 0 0 0 2px var(--tech-blue);
+  border-color: transparent;
+}
+
+/* Hero */
+.hero-content { text-shadow: 0 2px 12px rgba(0,0,0,0.45); }
+.hero h1 { font-weight: 600; font-size: 3.6rem; text-shadow: 0 2px 16px rgba(0,0,0,0.5); }
+.hero p { font-weight: 400; }
+.cta-button {
+  background: var(--tech-blue);
+  border-radius: 6px;
+  box-shadow: none;
+  color: #1f1a10;
+  font-weight: 600;
+}
+.cta-button:before { display: none; }
+.cta-button:hover { transform: translateY(-2px); background: #d99a3d; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+
+/* Nagłówki sekcji: wyrównane, kreska jak podziałka mapy */
+.section h2 { font-weight: 600; font-size: 2.6rem; margin-bottom: 56px; }
+.section h2:after {
+  width: 64px; height: 3px; border-radius: 0; box-shadow: none;
+  background: repeating-linear-gradient(90deg, var(--tech-blue) 0 16px, transparent 16px 32px);
+  outline: 1px solid var(--tech-blue);
+}
+.dark-section h2:after { background: repeating-linear-gradient(90deg, var(--tech-blue) 0 16px, transparent 16px 32px); }
+
+/* Ciemne sekcje: jednolita sosna, czytelny tekst */
+.dark-section { background: var(--forest-green); box-shadow: none; }
+.dark-section, .dark-section p, .dark-section li { font-weight: 400; }
+
+/* O mnie */
+.about-image img { border: none; border-radius: 4px; box-shadow: 12px 12px 0 rgba(200,137,47,0.35); }
+.about-image:hover img { transform: none; box-shadow: 12px 12px 0 rgba(200,137,47,0.5); }
+
+/* CV */
+.cv-brief, #cv .cv-brief, .cv-column, #cv .cv-column {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: none;
+  border: 1px solid rgba(241,236,224,0.12);
+  border-radius: 6px;
+  box-shadow: none;
+}
+.cv-column:hover, #cv .cv-column:hover { transform: none; box-shadow: none; }
+.cv-header h3 { font-size: 1.9rem; font-weight: 600; }
+.cv-header p { font-weight: 400; }
+.experience-item:before, .education-item:before {
+  width: 10px; height: 10px; box-shadow: none;
+  background: transparent; border: 2px solid var(--tech-blue);
+}
+.experience-description, .education-description { opacity: 0.85; }
+.skill-category {
+  background: transparent;
+  border-left: 2px solid var(--tech-blue);
+  border-radius: 0;
+}
+.skill-category:hover { transform: none; background: rgba(255,255,255,0.03); }
+.skill-category li:before { content: '–'; }
+.cv-btn, #cv .cv-btn, .cv-download-btn, #cv .cv-download-btn {
+  background: var(--tech-blue);
+  color: #1f1a10;
+  border-radius: 6px;
+  box-shadow: none;
+}
+#cv .cv-view-btn { background: transparent; color: var(--light-text); border: 1px solid rgba(241,236,224,0.4); }
+.cv-btn:hover, #cv .cv-btn:hover { transform: translateY(-2px); box-shadow: none; animation: none; }
+
+/* Projekty: spokojne karty jak arkusze mapy */
+.project-card {
+  border-radius: 6px;
+  border: 1px solid rgba(31,58,46,0.12);
+  box-shadow: 0 1px 2px rgba(31,58,46,0.06);
+  transform: none !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.project-card:hover {
+  box-shadow: 0 14px 30px rgba(31,58,46,0.14);
+  border-color: rgba(200,137,47,0.6);
+}
+.project-card:hover .project-img { transform: scale(1.03); }
+.project-tech span {
+  background: rgba(244,240,230,0.92);
+  color: var(--forest-green);
+  border-radius: 3px;
+  box-shadow: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.project-card:hover .project-tech span { background: rgba(244,240,230,0.92); transform: none; }
+.project-info h3 { font-weight: 600; font-size: 1.4rem; }
+.project-card:hover .project-info h3 { color: var(--forest-green); }
+.project-link { color: #a86d1c; }
+
+/* Kontakt i stopka */
+.contact-card, .contact-form { border-radius: 6px !important; box-shadow: none !important; }
+.submit-btn { background: var(--tech-blue) !important; color: #1f1a10 !important; border-radius: 6px !important; box-shadow: none !important; }
+.form-control:focus { border-color: var(--tech-blue) !important; box-shadow: 0 0 0 3px rgba(200,137,47,0.2) !important; }
+footer { background: #17291f; }
+.cta-button, .cta-button:hover { text-decoration: none; text-shadow: none; }
+
+/* Miniatury projektów: lekko wyciszone, pełny kolor po najechaniu */
+.project-img {
+  height: 230px;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.75) contrast(0.95);
+  transition: transform 0.6s ease, filter 0.6s ease;
+}
+.project-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(31,58,46,0.55) 0%, rgba(31,58,46,0) 45%);
+  pointer-events: none;
+}
+.project-card:hover .project-img {
+  filter: saturate(1.05) contrast(1);
+  transform: scale(1.04);
+}
+.project-card .project-img .project-tech { z-index: 3; }

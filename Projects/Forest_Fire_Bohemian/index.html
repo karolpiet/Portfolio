@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bohemian Switzerland Fire Severity Analysis | Karol Pietruszka</title>
+  <meta name="description" content="Sentinel-2 and Google Earth Engine burn severity mapping of the 2022 wildfire in Bohemian Switzerland National Park.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Fire_styles.css">
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="logo">
+        <img src="../../logo_tree.svg" alt="Logo" class="logo-icon">
+        <span class="logo-text">Karol Pietruszka</span>
+      </div>
+      <a href="../../index.html" class="back-to-portfolio"><i class="fas fa-arrow-left"></i> <span>Back to Portfolio</span></a>
+      <a href="../../index.html#projects" class="back-to-projects"><i class="fas fa-th-large"></i> <span>Back to Projects</span></a>
+    </div>
+  </nav>
+
+  <div class="hero-section">
+    <div class="image-container">
+      <img id="mapImage" src="Data/hist_ndvi.png" alt="NDVI histograms before and after the fire" class="map-image">
+      <div class="enlarge-icon" onclick="openModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+        </svg>
+      </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <img class="modal-content" id="modalImage">
+    </div>
+  </div>
+
+  <section class="interactive-map-section">
+    <div class="interactive-map-header">
+      <h2><i class="fas fa-layer-group"></i> Explore the interactive map</h2>
+      <p>Toggle layers to compare pre-fire and post-fire imagery, burn severity (dNBR), severity classes and NDVI change — same map as in the analysis notebook.</p>
+    </div>
+    <div class="map-frame-wrapper">
+      <iframe src="interactive_map.html" class="map-frame" loading="lazy" title="Interactive burn severity map — Bohemian Switzerland National Park"></iframe>
+    </div>
+    <a href="interactive_map.html" target="_blank" class="map-fullscreen-link"><i class="fas fa-up-right-from-square"></i> Open full-screen in a new tab</a>
+  </section>
+
+  <div class="project-container">
+    <!-- Left column - Project description -->
+    <div class="project-description">
+      <h1>Forest Fire Impact Assessment — Bohemian Switzerland National Park (2022)</h1>
+      <div class="description-content">
+        <p>In July and August 2022, Bohemian Switzerland National Park (České Švýcarsko) — a protected sandstone landscape on the Czech–German border — experienced the largest forest fire in Czech recorded history, burning for several weeks and requiring an international firefighting response.</p>
+
+        <p>This project uses Sentinel-2 satellite imagery and Google Earth Engine to answer a simple question: <strong>how severe was the fire, which areas were hit hardest, and what share of the park's forest suffered serious canopy damage?</strong></p>
+
+        <h3>Methodology</h3>
+        <ol>
+          <li><strong>Study area:</strong> park boundary loaded from the World Database on Protected Areas (WDPA), ~106 km² total.</li>
+          <li><strong>Imagery:</strong> Sentinel-2 Surface Reflectance, cloud-masked using the QA60 band, combined into median composites.</li>
+          <li><strong>Baseline design:</strong> to avoid mixing natural seasonal vegetation decline with real fire damage, the pre-fire composite was built from the <em>same calendar season one year earlier</em> (Aug–Sep 2021) rather than spring 2022. The post-fire composite was shifted to Sep 15 – Oct 15 2022, safely after full containment, so no image mixes burning and already-burned conditions.</li>
+          <li><strong>Indices:</strong> NDVI (vegetation greenness) and NBR (Normalized Burn Ratio, using the SWIR band) calculated for both periods.</li>
+          <li><strong>Burn severity:</strong> dNBR = NBR<sub>pre</sub> − NBR<sub>post</sub>, classified into 4 standard USGS severity classes.</li>
+          <li><strong>Forest mask:</strong> statistics restricted to forest pixels only, using the ESA WorldCover 2021 land-cover product, so non-forest land (rock, settlements, water) doesn't skew the numbers.</li>
+        </ol>
+
+        <h3>Results</h3>
+        <p>Of the park's 94.4 km² of forest, roughly a third burned to some degree. Breaking that down by severity:</p>
+
+        <table class="severity-table">
+          <tr><th>Severity class</th><th>Area</th><th>% of forest</th></tr>
+          <tr><td><span class="severity-dot" style="background:#4caf50"></span>Unburned / regrowth</td><td>62.9 km²</td><td>66.6%</td></tr>
+          <tr><td><span class="severity-dot" style="background:#f4d35e"></span>Low severity</td><td>22.9 km²</td><td>24.2%</td></tr>
+          <tr><td><span class="severity-dot" style="background:#f4894c"></span>Moderate severity</td><td>5.3 km²</td><td>5.6%</td></tr>
+          <tr><td><span class="severity-dot" style="background:#d7263d"></span>High severity</td><td>3.6 km²</td><td>3.8%</td></tr>
+        </table>
+
+        <figure>
+          <img src="Data/severity_breakdown.png" alt="Burn severity breakdown chart">
+          <figcaption>Burn severity as % of forested area (dNBR classification, forest pixels only).</figcaption>
+        </figure>
+
+        <p>Expressed against everything that burned rather than the whole forest, <strong>27.8% of the burned area was moderate-to-high severity</strong> — closely matching independently reported fire-extent figures. The pattern is ecologically typical of large wildfires: a wide low-severity perimeter (likely surface/understory burn, where natural regeneration is realistic) surrounding a smaller, more severely burned core (likely stand-replacing crown fire, requiring active replanting).</p>
+
+        <figure>
+          <img src="Data/bar_ndvi_nbr.png" alt="Mean NDVI and NBR before vs after the fire">
+          <figcaption>Mean NDVI and NBR over forest pixels, before vs after the fire.</figcaption>
+        </figure>
+
+        <p>Mean NDVI over forest pixels dropped from 0.69 to 0.60, and mean NBR dropped from 0.41 to 0.32 — a proportionally larger decline (~22%), consistent with theory: NBR is more sensitive to post-fire moisture loss and char/ash signatures, while NDVI mainly tracks canopy greenness.</p>
+
+        <h3>Validation</h3>
+        <p>The result was cross-checked two ways: a sanity check re-running the analysis over the whole park (forest mask removed) produced nearly identical class proportions, confirming the land-cover mask wasn't distorting the outcome; and a bookkeeping check confirmed the severity classes summed to within ~0.1% of the independently computed forest area.</p>
+
+        <div class="caveat-box">
+          <strong>Caveats:</strong> the composites are built from a modest number of scenes (6 pre-fire, 4 post-fire), and the comparison spans two different years rather than the same year, so interannual variability (2022 was an unusually hot, dry summer across Europe) isn't fully controlled for. The close agreement between masked and unmasked sanity checks suggests this isn't the dominant driver of the signal, but it can't be fully ruled out without a third, fire-unaffected reference area.
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column - Statistics and technical details -->
+    <div class="project-stats">
+      <div class="stats-section">
+        <h2><i class="fas fa-fire"></i> Key Numbers</h2>
+        <div class="stat-card area">
+          <h3>Forest Area Analyzed</h3>
+          <p class="stat-value">94.4 km²</p>
+          <p class="stat-detail">89% of the 106 km² park</p>
+        </div>
+        <div class="stat-card moderate-high">
+          <h3>Moderate–High Severity</h3>
+          <p class="stat-value">27.8%</p>
+          <p class="stat-detail">of the burned forest area</p>
+        </div>
+        <div class="stat-card high">
+          <h3>Total Forest Severely Damaged</h3>
+          <p class="stat-value">9.4%</p>
+          <p class="stat-detail">of the entire forested park area</p>
+        </div>
+        <div class="stat-card unburned">
+          <h3>Unburned / Regrowth</h3>
+          <p class="stat-value">66.6%</p>
+          <p class="stat-detail">of forest showed no significant burn signal</p>
+        </div>
+      </div>
+
+      <div class="tech-section">
+        <h2><i class="fas fa-cogs"></i> Technical Details</h2>
+        <div class="tech-card">
+          <h3>Platform & Tools</h3>
+          <ul>
+            <li>Google Earth Engine</li>
+            <li>Python (geemap, pandas, numpy, matplotlib)</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h3>Data Sources</h3>
+          <ul>
+            <li>Sentinel-2 SR Harmonized (COPERNICUS/S2_SR_HARMONIZED)</li>
+            <li>ESA WorldCover v200 (land cover / forest mask)</li>
+            <li>WDPA park boundary</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h3>Methods</h3>
+          <ul>
+            <li>Cloud masking (QA60)</li>
+            <li>NDVI / NBR / dNBR</li>
+            <li>USGS burn severity classification</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="fire_scripts.js"></script>
+</body>
+</html>

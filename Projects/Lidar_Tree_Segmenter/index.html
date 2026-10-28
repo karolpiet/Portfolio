@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LidarTreeSegmenter – Tree Detection from LiDAR | Karol Pietruszka</title>
+  <meta name="description" content="Work-in-progress Python tool for tree detection, segmentation and forest inventory from terrestrial and mobile LiDAR point clouds.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Lidar_styles.css">
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="logo">
+        <img src="../../logo_tree.svg" alt="Logo" class="logo-icon">
+        <span class="logo-text">Karol Pietruszka</span>
+      </div>
+      <a href="../../index.html" class="back-to-portfolio"><i class="fas fa-arrow-left"></i> <span>Back to Portfolio</span></a>
+      <a href="../../index.html#projects" class="back-to-projects"><i class="fas fa-th-large"></i> <span>Back to Projects</span></a>
+    </div>
+  </nav>
+
+  <div class="hero-section">
+    <div class="image-container">
+      <img id="mapImage" src="Data/view3d.png" alt="3D view of a segmented forest plot, each tree in its own colour" class="map-image">
+      <div class="enlarge-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+        </svg>
+      </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <img class="modal-content" id="modalImage">
+    </div>
+  </div>
+
+  <div class="project-container">
+    <!-- Left column - Project description -->
+    <div class="project-description">
+      <span class="wip-badge"><i class="fas fa-tools"></i> Work in progress</span>
+      <h1>LidarTreeSegmenter – Tree Detection and Forest Inventory from LiDAR Point Clouds</h1>
+      <div class="description-content">
+        <p>LidarTreeSegmenter is a Python tool I am developing to turn a terrestrial or mobile LiDAR scan of a forest plot (TLS, MLS, handheld SLAM) into tree-level inventory data. The idea is simple: drop a <code>.laz</code> / <code>.las</code> file onto the program and get, for every tree, its position, DBH, height and an estimate of timber volume, plus a plot-level summary.</p>
+
+        <p>The project is still in active development. The pipeline runs end to end, but it has so far been tested mainly on a synthetic test plot, so the results should be treated as experimental rather than validated inventory figures.</p>
+
+        <h3>How it works</h3>
+        <ol>
+          <li><strong>Pre-processing:</strong> noise removal, ground classification, terrain model and normalisation of point heights above ground.</li>
+          <li><strong>Stem detection:</strong> circles are fitted to bark points in thin horizontal slices; circles that stack into a near-vertical cylinder are accepted as stems.</li>
+          <li><strong>Segmentation:</strong> every point of the cloud is assigned to the nearest stem using a neighbourhood graph, so each tree gets its own ID.</li>
+          <li><strong>Tree parts:</strong> the stem is tracked upwards every 20 cm into the crown and points are split into stem, branches, foliage and understory.</li>
+          <li><strong>Quality checks:</strong> geometric tests to remove false trees (shrubs, stumps, snags) and to resolve DBH disagreements.</li>
+          <li><strong>Outputs:</strong> Excel report, GeoPackage with a QGIS project, per-tree images and an interactive 3D view in the browser.</li>
+        </ol>
+
+        <p>No pre-trained machine-learning model or GPU is needed: the approach is mostly geometric (circle and cylinder fitting, neighbourhood graphs).</p>
+
+        <figure>
+          <img src="Data/hw_slice.png" alt="Slice of the point cloud with fitted stem circles">
+          <figcaption>A horizontal slice of the test plot (left) and the stem circles that passed all tests (right).</figcaption>
+        </figure>
+
+        <figure>
+          <img src="Data/tree.png" alt="Single tree split into stem, branches and foliage with DBH cross-section">
+          <figcaption>Output for a single tree: two side views split into stem, branches and foliage, and the cross-section at 1.3 m used to measure DBH.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="Data/hw_segmentation.png" alt="Top view of segmented test plot">
+          <figcaption>Segmentation of the synthetic test plot, top view: every tree has its own colour and number.</figcaption>
+        </figure>
+
+        <div class="caveat-box">
+          <strong>Status:</strong> this is an unfinished, experimental tool. Parts of the pipeline (especially species recognition from tree shape and volume estimation with generic form factors) are rough and need more work and proper validation against field measurements. Next steps: testing on more real plots, comparing with established segmentation methods and improving accuracy in dense stands.
+        </div>
+
+        <a href="https://github.com/karolpiet/LidarTreeSegmenter" target="_blank" class="repo-link"><i class="fab fa-github"></i> Source code on GitHub</a>
+      </div>
+    </div>
+
+    <!-- Right column - Technical details -->
+    <div class="project-stats">
+      <div class="tech-section">
+        <h2><i class="fas fa-cogs"></i> Technical Details</h2>
+        <div class="tech-card">
+          <h3>Platform & Tools</h3>
+          <ul>
+            <li>Python (NumPy, laspy, scikit-learn)</li>
+            <li>GeoPackage + QGIS project output</li>
+            <li>three.js for the 3D browser view</li>
+            <li>Simple Windows GUI with batch processing</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h3>Input Data</h3>
+          <ul>
+            <li>Terrestrial / mobile LiDAR (TLS, MLS, SLAM)</li>
+            <li><code>.las</code> / <code>.laz</code> point clouds</li>
+            <li>Optional: scanner trajectory, GPS field measurements</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h3>Methods</h3>
+          <ul>
+            <li>Ground filtering and terrain model</li>
+            <li>Circle and cylinder fitting (DBH)</li>
+            <li>Graph-based point-to-tree segmentation</li>
+            <li>Stem / branches / foliage classification</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="lidar_scripts.js"></script>
+</body>
+</html>

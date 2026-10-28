@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Analysis | Bicycle Accessibility in Wrocław | Karol Pietruszka</title>
+  <link rel="stylesheet" href="Bike_styles.css">
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="logo">
+        <img src="../../logo_tree.svg" alt="Logo" class="logo-icon">
+        <span class="logo-text">Karol Pietruszka</span>
+      </div>
+      <a href="../../index.html" class="back-to-portfolio"><i class="fas fa-arrow-left"></i> <span>Back to Portfolio</span></a>
+      <a href="../../index.html#projects" class="back-to-projects"><i class="fas fa-th-large"></i> <span>Back to Projects</span></a>
+    </div>
+  </nav>
+
+  <div class="hero-section">
+    <div class="image-container">
+      <img id="mapImage" src="data/wroclaw.jpg" alt="Bicycle accessibility map of Wrocław" class="map-image">
+      <div class="enlarge-icon" onclick="openModal()">
+        <i class="fas fa-expand"></i>
+      </div>
+    </div>
+    <div id="imageModal" class="modal">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <img class="modal-content" id="modalImage">
+    </div>
+  </div>
+
+  <main class="project-container">
+    <article class="project-content">
+      <section class="intro-section">
+        <h1>Bicycle Accessibility to Railway Stations in Wrocław</h1>
+        <p class="lead">A network analysis showing the bicycle travel range to main railway stations in Wrocław within 5, 10, and 15 minutes</p>
+      </section>
+
+      <section class="content-section" id="introduction">
+        <h2><i class="fas fa-map-marked-alt"></i> Introduction</h2>
+        <p>Wrocław, with its unique geography and numerous watercourses, presents a fascinating subject for analyzing bicycle accessibility to various locations, including railway stations. I chose Wrocław for this analysis due to its significance as a major Polish city and growing interest among cyclists.</p>
+        <p>Cyclists have become an integral part of Wrocław's urban landscape, increasingly engaging in sustainable and eco-friendly transportation. Railway stations serve as key destinations for cyclists, functioning as transit hubs and departure points for train journeys.</p>
+        <div class="highlight-box">
+          <h3>Research Objective</h3>
+          <p>Optimizing bicycle access to railway stations is crucial for improving residents' quality of life and reducing traffic congestion and greenhouse gas emissions in the city.</p>
+        </div>
+      </section>
+
+      <section class="content-section" id="methods">
+        <h2><i class="fas fa-microscope"></i> Methods</h2>
+        <h3>Data Sources</h3>
+        <p>For this analysis, I used geodatabases and OpenStreetMap data obtained from <a href="https://download.bbbike.org/osm/bbbike/" target="_blank">BBBike</a>. Data on railway station locations were filtered from the "Wroclaw_osm_pt" layer, selecting records where the "railway" column was marked as "station".</p>
+        
+        <h3>Analytical Tools</h3>
+        <p>The analysis was conducted using the "Service Area" tool in ArcGIS Pro. This tool is designed for analyzing road or route networks, allowing the determination of areas reachable within specified travel times or distances from selected destination points within a given network.</p>
+        
+        <div class="method-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <p>Preparation of road network data and station locations</p>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <p>Configuration of analysis parameters (direction: Toward facilities, geometry: Dissolve)</p>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <p>Conducting analysis for different travel times (5, 10, 15 minutes)</p>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <p>Visualization of results on maps</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section" id="results">
+        <h2><i class="fas fa-chart-bar"></i> Results</h2>
+        <p>All three travel-time thresholds are combined in a single map (shown at the top of this page). Each railway station is surrounded by nested service areas: the lightest zone is reachable within 5 minutes, the middle one within 5–10 minutes, and the darkest within 10–15 minutes of cycling.</p>
+        <ul>
+          <li>In the city centre the service areas of neighbouring stations overlap and form one continuous zone reachable within 15 minutes.</li>
+          <li>Stations on the outskirts create separate "islands" of accessibility along the railway lines, with gaps in between.</li>
+          <li>The shape of the zones follows the street and cycling network, so rivers and other barriers visibly limit the range in some directions.</li>
+        </ul>
+        <p class="map-hint"><i class="fas fa-search-plus"></i> Click the map at the top to view it in full size.</p>
+      </section>
+
+      <section class="content-section" id="discussion">
+        <h2><i class="fas fa-comments"></i> Discussion</h2>
+        <p>The network analysis of bicycle access to railway stations in Wrocław provided valuable insights regarding accessibility and travel range within specified timeframes. This study offers a clear picture of several key aspects affecting cyclist mobility in the city.</p>
+        
+        <h3>Key Findings</h3>
+        <ul class="conclusions-list">
+          <li><i class="fas fa-check-circle"></i> Identification of areas accessible within 5, 10, and 15 minutes by bicycle</li>
+          <li><i class="fas fa-check-circle"></i> Detection of areas requiring bicycle infrastructure improvements</li>
+          <li><i class="fas fa-check-circle"></i> Differentiation between city districts regarding accessibility</li>
+        </ul>
+        
+        <h3>Limitations and Further Research</h3>
+        <p>To enhance this analysis, future studies could consider:</p>
+        <ul>
+          <li>Route elevation profiles</li>
+          <li>Different cyclist speeds</li>
+          <li>Traffic conditions</li>
+          <li>Peak hours</li>
+        </ul>
+      </section>
+
+      <section class="content-section" id="summary">
+        <h2><i class="fas fa-clipboard-check"></i> Summary</h2>
+        <div class="summary-box">
+          <p>The analysis concludes that Wrocław's bicycle infrastructure is well-developed. The network of bicycle routes enables quick access to railway stations, suggesting that Wrocław invests in cycling infrastructure and strives to create a cyclist-friendly environment.</p>
+          <div class="benefits-grid">
+            <div class="benefit-item">
+              <i class="fas fa-traffic-light"></i>
+              <h4>Traffic Reduction</h4>
+              <p>Decreased number of cars on the roads</p>
+            </div>
+            <div class="benefit-item">
+              <i class="fas fa-leaf"></i>
+              <h4>Ecology</h4>
+              <p>Environmentally friendly sustainable transport</p>
+            </div>
+            <div class="benefit-item">
+              <i class="fas fa-heartbeat"></i>
+              <h4>Health</h4>
+              <p>Promotion of healthy lifestyle</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  
+
+  <script src="Bike_script.js"></script>
+</body>
+</html>
