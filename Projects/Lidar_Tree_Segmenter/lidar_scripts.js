@@ -28,6 +28,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Interactive 3D view: load the iframe only after a click (the file is about 4 MB)
+  const poster = document.getElementById('viewerPoster');
+  if (poster) {
+    poster.addEventListener('click', function() {
+      const frame = document.createElement('iframe');
+      frame.src = 'view3d.html';
+      frame.className = 'map-frame';
+      frame.title = 'Interactive 3D view of a real forest plot';
+      poster.replaceWith(frame);
+    });
+  }
+
   // Navbar scroll effect
   window.addEventListener('scroll', function() {
     if (window.scrollY > 50) {

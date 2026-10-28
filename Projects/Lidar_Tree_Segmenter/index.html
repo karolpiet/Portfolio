@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LidarTreeSegmenter – Tree Detection from LiDAR | Karol Pietruszka</title>
-  <meta name="description" content="Work-in-progress Python tool for tree detection, segmentation and forest inventory from terrestrial and mobile LiDAR point clouds.">
+  <meta name="description" content="Work-in-progress Python tool for tree detection, segmentation and forest inventory from terrestrial and mobile LiDAR point clouds, with an interactive 3D view of a real forest plot.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="Lidar_styles.css">
@@ -24,7 +24,7 @@
 
   <div class="hero-section">
     <div class="image-container">
-      <img id="mapImage" src="Data/view3d.png" alt="3D view of a segmented forest plot, each tree in its own colour" class="map-image">
+      <img id="mapImage" src="Data/plot_3d.jpg" alt="3D view of a real scanned forest plot, each tree in its own colour" class="map-image">
       <div class="enlarge-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
@@ -38,6 +38,20 @@
     </div>
   </div>
 
+  <section class="interactive-map-section">
+    <div class="interactive-map-header">
+      <h2><i class="fas fa-cube"></i> Explore the scan in 3D</h2>
+      <p>The same browser view the tool creates for every scan, here for a real forest plot (thinned to 250,000 points). Rotate with the left mouse button, pan with the right one, zoom with the wheel and click a tree to see its DBH, height and volume.</p>
+    </div>
+    <div class="map-frame-wrapper viewer-wrapper">
+      <button type="button" class="viewer-poster" id="viewerPoster" aria-label="Load the interactive 3D view">
+        <img src="Data/plot_parts.jpg" alt="" loading="lazy">
+        <span class="viewer-play"><i class="fas fa-cube"></i> Load interactive 3D view <small>(about 4 MB)</small></span>
+      </button>
+    </div>
+    <a href="view3d.html" target="_blank" class="map-fullscreen-link"><i class="fas fa-up-right-from-square"></i> Open full-screen in a new tab</a>
+  </section>
+
   <div class="project-container">
     <!-- Left column - Project description -->
     <div class="project-description">
@@ -46,7 +60,7 @@
       <div class="description-content">
         <p>LidarTreeSegmenter is a Python tool I am developing to turn a terrestrial or mobile LiDAR scan of a forest plot (TLS, MLS, handheld SLAM) into tree-level inventory data. The idea is simple: drop a <code>.laz</code> / <code>.las</code> file onto the program and get, for every tree, its position, DBH, height and an estimate of timber volume, plus a plot-level summary.</p>
 
-        <p>The project is still in active development. The pipeline runs end to end, but it has so far been tested mainly on a synthetic test plot, so the results should be treated as experimental rather than validated inventory figures.</p>
+        <p>The pipeline runs end to end. I first checked it on a synthetic plot where the true DBH and heights are known, and I am now running it on real scans of forest plots in Austria. The images and the 3D view on this page come from one of those real plots. The numbers are the tool's own output and have not yet been checked against field measurements.</p>
 
         <h3>How it works</h3>
         <ol>
@@ -61,22 +75,17 @@
         <p>No pre-trained machine-learning model or GPU is needed: the approach is mostly geometric (circle and cylinder fitting, neighbourhood graphs).</p>
 
         <figure>
-          <img src="Data/hw_slice.png" alt="Slice of the point cloud with fitted stem circles">
-          <figcaption>A horizontal slice of the test plot (left) and the stem circles that passed all tests (right).</figcaption>
+          <img src="Data/plot_parts.jpg" alt="Real forest plot coloured by stem, branches, foliage and understory" loading="lazy">
+          <figcaption>The real plot split into stem (dark orange), branches (light orange), foliage (green), understory (grey) and shrubs 0.3–4 m (purple), shown on the terrain model.</figcaption>
         </figure>
 
         <figure>
-          <img src="Data/tree.png" alt="Single tree split into stem, branches and foliage with DBH cross-section">
-          <figcaption>Output for a single tree: two side views split into stem, branches and foliage, and the cross-section at 1.3 m used to measure DBH.</figcaption>
-        </figure>
-
-        <figure>
-          <img src="Data/hw_segmentation.png" alt="Top view of segmented test plot">
-          <figcaption>Segmentation of the synthetic test plot, top view: every tree has its own colour and number.</figcaption>
+          <img src="Data/tree_39.jpg" alt="Single beech tree split into stem, branches and foliage with DBH cross-section" loading="lazy">
+          <figcaption>Output for a single tree from the real plot: two side views split into stem, branches and foliage, and the cross-section at 1.3 m used to measure DBH. The two DBH methods built into the tool agree within about 1 cm here (70.2 cm and 69.1 cm).</figcaption>
         </figure>
 
         <div class="caveat-box">
-          <strong>Status:</strong> this is an unfinished, experimental tool. Parts of the pipeline (especially species recognition from tree shape and volume estimation with generic form factors) are rough and need more work and proper validation against field measurements. Next steps: testing on more real plots, comparing with established segmentation methods and improving accuracy in dense stands.
+          <strong>Status:</strong> this is an unfinished, experimental tool. Parts of the pipeline (especially species recognition from tree shape and volume estimation with generic form factors) are rough and need more work and proper validation against field measurements. Next steps: comparing results with field-measured trees, testing on more plots and improving accuracy in dense stands.
         </div>
 
         <a href="https://github.com/karolpiet/LidarTreeSegmenter" target="_blank" class="repo-link"><i class="fab fa-github"></i> Source code on GitHub</a>
@@ -85,6 +94,21 @@
 
     <!-- Right column - Technical details -->
     <div class="project-stats">
+      <div class="tech-section">
+        <h2><i class="fas fa-tree"></i> Example plot</h2>
+        <div class="tech-card">
+          <h3>Tool output, not validated</h3>
+          <ul class="plot-facts">
+            <li><span>Plot area</span><strong>0.19 ha</strong></li>
+            <li><span>Trees detected</span><strong>33</strong></li>
+            <li><span>Mean DBH</span><strong>44.3 cm</strong></li>
+            <li><span>Lorey's height</span><strong>28.4 m</strong></li>
+            <li><span>Basal area</span><strong>28.9 m²/ha</strong></li>
+            <li><span>Terrain slope (mean)</span><strong>15°</strong></li>
+          </ul>
+          <p class="plot-note">Mostly beech with some spruce. Species labels are preliminary.</p>
+        </div>
+      </div>
       <div class="tech-section">
         <h2><i class="fas fa-cogs"></i> Technical Details</h2>
         <div class="tech-card">
