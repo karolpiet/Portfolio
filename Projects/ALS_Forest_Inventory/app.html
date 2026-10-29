@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forest on a Parcel – ALS calculator | Karol Pietruszka</title>
-<meta name="description" content="Pick a cadastral parcel or draw an area and get forest area, tree count, heights and a timber volume estimate from airborne LiDAR, computed in the browser.">
+<title>Forest on a Parcel – calculator | Karol Pietruszka</title>
+<meta name="description" content="Pick any cadastral parcel in Poland and get forest area, tree count, heights and a timber volume estimate computed in the browser from the national GUGiK elevation models.">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Raleway:wght@400;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/x-icon" href="../../favicon.ico">
@@ -64,7 +64,7 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
   <aside id="panel">
     <button id="toggle" type="button" aria-label="Hide or show the panel">▾</button>
     <h1>Forest on a parcel</h1>
-    <p class="sub">Airborne LiDAR (ALS, April 2014) of a pine forest near Wierzchowiska, Poland. Pick a cadastral parcel, draw an area or upload a boundary: forest area, trees and a timber volume estimate are computed in your browser.</p>
+    <p class="sub">Anywhere in Poland: type a parcel ID or zoom in and click a parcel. The canopy height is computed in your browser from the national surface and terrain models (GUGiK NMPT 0.5 m − NMT 1 m), then the forest area, trees and a timber volume estimate.</p>
 
     <form id="search">
       <input type="text" id="q" placeholder="Parcel ID, e.g. 140905_5.0031.129/6" aria-label="Parcel ID or precinct and number">
@@ -74,10 +74,10 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
       <button type="button" id="mPick" class="on">Click a parcel</button>
       <button type="button" id="mDraw">Draw an area</button>
       <button type="button" id="mFile">Upload KML / GPX / GeoJSON</button>
-      <button type="button" id="mAll">Whole study area</button>
+      <button type="button" id="mHelp">How it works</button>
     </div>
     <input type="file" id="file" accept=".kml,.gpx,.geojson,.json" hidden>
-    <div class="hint" id="hint">Click anywhere inside the outlined study area to select a parcel.</div>
+    <div class="hint" id="hint">Zoom in and click a parcel, or try <a href="#" id="example">140905_5.0031.129/6</a>.</div>
     <div id="status"></div>
     <div id="result"></div>
   </aside>
@@ -86,107 +86,68 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
 
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/proj4.js"></script>
-<script src="data/mapa.js"></script>
-<script src="data/drzewa.js"></script>
+<script src="vendor/geotiff.js"></script>
 <script src="als-core.js"></script>
+<script src="pl-core.js"></script>
+<script>
+// address of the Cloudflare Worker that passes the GUGiK elevation models to the browser
+window.ALS.PROXY = 'https://geoportal-proxy.karolpietruszka88-324.workers.dev/';
+</script>
 <script>
 (function () {
-  const core = ALS.core, M = ALS.mapa;
+  const core = ALS.core, pl = ALS.pl;
   const $ = (id) => document.getElementById(id);
   const fmt = (v, d = 0) => Number(v).toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const ll = (x, y) => { const [lon, lat] = core.toWGS(x, y); return [lat, lon]; };
 
   // --- map and layers -----------------------------------------------------
-  const map = L.map('map', { zoomControl: true, preferCanvas: true }).fitBounds(M.bounds);
-  const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    { maxZoom: 20, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
-  const orto = L.tileLayer.wms('https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution',
-    { layers: 'Raster', format: 'image/jpeg', maxZoom: 20, attribution: 'Orthophoto &copy; GUGiK' });
-  // WMS lines (parcels, BDL) go in their own pane above the LiDAR rasters, otherwise the CHM hides them
+  // start over a forest near Wierzchowiska, close enough to see the parcels
+  const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView([51.1775, 21.507], 16);
   map.createPane('lines').style.zIndex = 450;
+  const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { maxZoom: 21, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+  // WMTS (pre-cut tiles) loads much faster than the orthophoto WMS
+  const orto = L.tileLayer('https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMTS/StandardResolution' +
+    '?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTOFOTOMAPA&STYLE=default&FORMAT=image/jpeg' +
+    '&TILEMATRIXSET=EPSG:3857&TILEMATRIX=EPSG:3857:{z}&TILEROW={y}&TILECOL={x}',
+    { maxZoom: 21, maxNativeZoom: 19, attribution: 'Orthophoto &copy; GUGiK' });
   // KIEG draws county parcels below 1:10 000 (zoom 16+); where a county has no service the
   // parcels come from the LPIS supplement ('geoportal'), drawn only below 1:2 500 (zoom 18+);
   // parcel numbers below 1:1 500 (zoom 19+)
   const kieg = L.tileLayer.wms('https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow',
-    { layers: 'geoportal,dzialki,numery_dzialek', format: 'image/png', transparent: true, minZoom: 16, maxZoom: 20,
+    { layers: 'geoportal,dzialki,numery_dzialek', format: 'image/png', transparent: true, minZoom: 16, maxZoom: 21,
       pane: 'lines', attribution: 'Parcels &copy; GUGiK (KIEG)' });
-  // 0/1 = subcompartments (private / State Forests), 2/3 = compartments
   const bdlWms = L.tileLayer.wms('https://mapserver.bdl.lasy.gov.pl/ArcGIS/services/WMS_BDL/mapserver/WMSServer',
-    { layers: '0,1,2,3', format: 'image/png', transparent: true, version: '1.3.0', minZoom: 13, maxZoom: 20,
+    { layers: '0,1,2,3', format: 'image/png', transparent: true, version: '1.3.0', minZoom: 13, maxZoom: 21,
       pane: 'lines', attribution: 'Forest Data Bank &copy; BDL' });
-  const lidar = 'ALS data &copy; GUGiK (ISOK 2014), processing K. Pietruszka';
-  const chm = L.imageOverlay('img/chm.png', M.bounds, { opacity: 0.85, attribution: lidar });
-  const dtm = L.imageOverlay('img/dtm.png', M.bounds, { opacity: 0.9, attribution: lidar });
-  const zw = L.imageOverlay('img/zwarcie.png', M.bounds, { opacity: 0.9, attribution: lidar });
-  const outline = L.polygon(M.zasieg, { color: '#f4894c', weight: 2, fill: false, dashArray: '6 4', interactive: false });
-  const trees = L.layerGroup();
-  orto.addTo(map); chm.addTo(map); outline.addTo(map); kieg.addTo(map);
+  const chmLayer = L.layerGroup(), trees = L.layerGroup();
+  orto.addTo(map); kieg.addTo(map); chmLayer.addTo(map);
 
   L.control.layers(
     { 'Orthophoto (Geoportal)': orto, 'OpenStreetMap': osm },
-    { 'Canopy height (CHM)': chm, 'Terrain (DTM hillshade)': dtm, 'Crown closure': zw,
-      'Tree tops (zoom in)': trees, 'Cadastral parcels': kieg, 'Forest subcompartments (BDL)': bdlWms,
-      'Study area': outline },
+    { 'Canopy height (computed)': chmLayer, 'Tree tops (computed)': trees, 'Cadastral parcels': kieg,
+      'Forest subcompartments (BDL)': bdlWms },
     { collapsed: window.innerWidth < 760 }).addTo(map);
   L.control.scale({ imperial: false }).addTo(map);
 
-  // tell the user to zoom in when parcel lines are not drawn yet
+  const legend = L.control({ position: 'bottomright' });
+  legend.onAdd = () => {
+    const el = L.DomUtil.create('div', 'legend');
+    el.innerHTML = '<div><b>Canopy height</b><div class="bar" style="background:linear-gradient(90deg,#fde725,#5ec962,#21918c,#3b528b,#440154)"></div><div class="ends"><span>2 m</span><span>32 m</span></div></div>';
+    return el;
+  };
+
   const zoomHint = L.control({ position: 'topleft' });
   zoomHint.onAdd = () => L.DomUtil.create('div', 'zoomhint');
   zoomHint.addTo(map);
   function updateZoomHint() {
     const el = zoomHint.getContainer();
-    const show = map.hasLayer(kieg) && map.getZoom() < 18;
-    el.style.display = show ? '' : 'none';
+    el.style.display = map.hasLayer(kieg) && map.getZoom() < 18 ? '' : 'none';
     el.textContent = map.getZoom() < 16 ? 'Zoom in to see parcel boundaries'
       : 'Some counties show parcels only when zoomed in further';
   }
   map.on('zoomend overlayadd overlayremove', updateZoomHint);
   updateZoomHint();
-
-  // legend for the active raster overlay
-  const legends = {
-    chm: ['Canopy height', 'linear-gradient(90deg,#fde725,#5ec962,#21918c,#3b528b,#440154)', '2 m', '32 m'],
-    dtm: ['Terrain (DTM)', 'linear-gradient(90deg,#2e7846,#d6c98c,#965f3c)', '169 m', '185 m a.s.l.'],
-    zw: ['Crown closure', 'linear-gradient(90deg,#d73027,#fee08b,#1a9850)', 'open (≤ 0.4)', 'dense (1.0)'],
-  };
-  const legend = L.control({ position: 'bottomright' });
-  legend.onAdd = () => L.DomUtil.create('div', 'legend');
-  legend.addTo(map);
-  function updateLegend() {
-    const on = [['zw', zw], ['dtm', dtm], ['chm', chm]].filter(([, l]) => map.hasLayer(l)).map(([k]) => k);
-    const el = legend.getContainer();
-    el.style.display = on.length ? '' : 'none';
-    el.innerHTML = on.map(k => { const [t, g, a, b] = legends[k];
-      return `<div><b>${t}</b><div class="bar" style="background:${g}"></div><div class="ends"><span>${a}</span><span>${b}</span></div></div>`; }).join('');
-  }
-  map.on('overlayadd overlayremove', updateLegend);
-  updateLegend();
-
-  // tree tops: crowns drawn as circles for the trees in view (zoom >= 17)
-  let treeData = null;
-  core.loadTrees().then(t => { treeData = t; drawTrees(); });
-  function drawTrees() {
-    trees.clearLayers();
-    if (!treeData || !map.hasLayer(trees) || map.getZoom() < 17) return;
-    const b = map.getBounds();
-    const sw = core.toPL(b.getWest(), b.getSouth()), ne = core.toPL(b.getEast(), b.getNorth());
-    let n = 0;
-    for (let i = 0; i < treeData.n && n < 5000; i++) {
-      const x = treeData.x[i], y = treeData.y[i];
-      if (x < sw[0] || x > ne[0] || y < sw[1] || y > ne[1]) continue;
-      const [lon, lat] = core.toWGS(x, y), h = treeData.hgt[i];
-      const c = L.circle([lat, lon], { radius: Math.max(treeData.crown[i] / 2, 0.8), weight: 1, color: '#fff',
-        fillColor: h > 25 ? '#1d4e1d' : h > 18 ? '#2e8b2e' : '#8bc34a', fillOpacity: 0.55 });
-      c.bindPopup(() => treePopup(i));
-      trees.addLayer(c); n++;
-    }
-  }
-  function treePopup(i) {
-    const h = treeData.hgt[i], [v, d] = core.treeVolume(h);
-    return `<b>Tree #${i + 1}</b> (pine)<br>Height: <b>${fmt(h, 1)} m</b><br>Crown diameter: ${fmt(treeData.crown[i], 1)} m` +
-      `<br>Crown closure: ${fmt(treeData.closure[i], 2)}<br>Est. DBH: ~${fmt(d)} cm<br>Est. stem volume: ~${fmt(v, 2)} m³`;
-  }
-  map.on('moveend overlayadd', drawTrees);
 
   // --- UI state -------------------------------------------------------------
   let mode = 'pick', drawPts = [], drawLine = null, areaLayer = null, bdlLayer = null, busy = false;
@@ -196,7 +157,7 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
     $('mPick').classList.toggle('on', m === 'pick');
     $('mDraw').classList.toggle('on', m === 'draw');
     m === 'draw' ? map.doubleClickZoom.disable() : map.doubleClickZoom.enable();
-    $('hint').innerHTML = m === 'pick' ? 'Click anywhere inside the outlined study area to select a parcel.'
+    $('hint').innerHTML = m === 'pick' ? 'Zoom in and click a parcel.'
       : 'Click to add corners, double-click (or click the first corner) to finish. <a href="#" id="undo">Undo last point</a>';
     if (m === 'draw') $('undo').onclick = (e) => { e.preventDefault(); drawPts.pop(); redrawLine(); };
     map.getContainer().style.cursor = m === 'draw' ? 'crosshair' : '';
@@ -205,8 +166,17 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
   $('mPick').onclick = () => setMode('pick');
   $('mDraw').onclick = () => setMode(mode === 'draw' ? 'pick' : 'draw');
   $('mFile').onclick = () => $('file').click();
-  $('mAll').onclick = () => run('Whole study area', [[M.zasieg.map(([lat, lon]) => core.toPL(lon, lat))]], { noBdl: true });
+  $('mHelp').onclick = () => { $('result').innerHTML = HELP; };
+  $('example').onclick = (e) => { e.preventDefault(); $('q').value = '140905_5.0031.129/6'; $('search').requestSubmit(); };
   $('toggle').onclick = () => { $('panel').classList.toggle('min'); $('toggle').textContent = $('panel').classList.contains('min') ? '▴' : '▾'; setTimeout(() => map.invalidateSize(), 50); };
+
+  const HELP = `<div class="title">How it works</div>
+    <p class="note">1. The parcel boundary comes from the GUGiK cadastral register (ULDK).<br>
+    2. For its bounding box the page downloads the national digital surface model (NMPT, 0.5 m) and terrain model (NMT, 1 m) from Geoportal. Both come from airborne laser scanning.<br>
+    3. Canopy height = surface − terrain. Pixels ≥ 5 m count as forest, 2–5 m as shrubs.<br>
+    4. Tree tops are local maxima of the smoothed canopy height, searched in a window as wide as a conifer crown of that height.<br>
+    5. Timber volume: A) sum over detected trees (pine height–diameter relation), B) canopy height × closure × 28 m²/ha basal area in 20 m cells.</p>
+    <p class="note">Limits: the scanning date differs between regions (roughly 2011–2023), buildings and other tall objects inside the area are counted as canopy, and the volume is an estimate (±25% at best). The largest area computed at once is ${pl.MAX_KM2} km².</p>`;
 
   function redrawLine() {
     if (drawLine) map.removeLayer(drawLine);
@@ -219,13 +189,13 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
       if (drawPts.length >= 3 && map.latLngToContainerPoint(drawPts[0]).distanceTo(e.containerPoint) < 12) return finishDraw();
       drawPts.push(e.latlng); redrawLine(); return;
     }
+    if (map.getZoom() < 14) { status('Zoom in closer to pick a parcel.'); return; }
     const [x, y] = core.toPL(e.latlng.lng, e.latlng.lat);
     status('Looking up the parcel in the GUGiK register…');
     try { showParcels(await core.parcelByXY(x, y)); } catch (err) { status(err.message, 'err'); }
   });
   map.on('dblclick', () => { if (mode === 'draw' && drawPts.length >= 3) finishDraw(); });
   function finishDraw() {
-    // a double-click also fires two clicks; drop duplicate points
     const pts = drawPts.filter((p, i) => i === 0 || p.distanceTo(drawPts[i - 1]) > 0.5);
     const ring = pts.map(p => core.toPL(p.lng, p.lat));
     ring.push(ring[0]);
@@ -258,43 +228,46 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
   }
 
   // --- the calculation ------------------------------------------------------
-  let chmLoaded = null;
-  function loadChm() {
-    if (ALS.chm) return Promise.resolve();
-    return chmLoaded || (chmLoaded = new Promise((ok, fail) => {
-      const s = document.createElement('script');
-      s.src = 'data/chm.js'; s.onload = ok;
-      s.onerror = () => { chmLoaded = null; fail(new Error('Could not load the canopy height model.')); };
-      document.head.appendChild(s);
-    }));
-  }
-
   async function run(label, polys, opt = {}) {
     if (busy) return;
     busy = true;
     if (areaLayer) map.removeLayer(areaLayer);
     if (bdlLayer) { map.removeLayer(bdlLayer); bdlLayer = null; }
-    const ll = polys.map(p => p.map(r => r.map(([x, y]) => { const [lon, lat] = core.toWGS(x, y); return [lat, lon]; })));
+    chmLayer.clearLayers(); trees.clearLayers();
+    const lls = polys.map(p => p.map(r => r.map(([x, y]) => ll(x, y))));
     areaLayer = L.layerGroup([
-      L.polygon(ll, { color: '#fff', weight: 7, opacity: 0.9, fill: false, interactive: false }),
-      L.polygon(ll, { color: '#d7263d', weight: 3, fillColor: '#f4d35e', fillOpacity: 0.25, interactive: false })
-        .bindTooltip(label, { permanent: true, direction: 'center', className: 'area-label' })
+      L.polygon(lls, { color: '#fff', weight: 7, opacity: 0.9, fill: false, interactive: false }),
+      L.polygon(lls, { color: '#d7263d', weight: 3, fill: false, interactive: false })
+        .bindTooltip(label, { permanent: true, direction: 'top', className: 'area-label' })
     ]).addTo(map);
-    map.fitBounds(L.latLngBounds(ll.flat(2)), { padding: [30, 30], maxZoom: 18 });
+    map.fitBounds(L.latLngBounds(lls.flat(2)), { padding: [30, 30], maxZoom: 18 });
     if (opt.id) history.replaceState(null, '', '#parcel=' + encodeURIComponent(opt.id));
     $('result').innerHTML = '';
     try {
-      if (!ALS.chm) status('Loading the canopy height model (about 7 MB, only the first time)…');
-      await loadChm();
-      status('Computing…');
+      const g = await pl.loadChm(polys, (m) => status(m));
+      status('Finding trees…');
       await new Promise(r => setTimeout(r, 20));
-      const w = await core.compute(polys);
+      const w = pl.compute(polys, g);
       status('');
-      render(label, w, opt);
-      if (!opt.noBdl && w.data_ha > 0) loadBdl(polys);
+      const im = w.image;
+      L.imageOverlay(im.url, [[im.south, im.west], [im.north, im.east]], { opacity: 0.85 }).addTo(chmLayer);
+      legend.addTo(map);
+      if (w.tops.length <= 5000) {
+        w.tops.forEach(t => L.circle(ll(t.x, t.y), { radius: Math.max(t.crown / 2, 0.8), weight: 1, color: '#fff',
+          fillColor: t.h > 25 ? '#1d4e1d' : t.h > 18 ? '#2e8b2e' : '#8bc34a', fillOpacity: 0.55 })
+          .bindPopup(() => treePopup(t)).addTo(trees));
+      }
+      render(label, w);
+      if (w.data_ha > 0) loadBdl(polys);
     } catch (err) {
       status(err.message, 'err');
     } finally { busy = false; }
+  }
+
+  function treePopup(t) {
+    const [v, d] = core.treeVolume(t.h);
+    return `<b>Tree top</b><br>Height: <b>${fmt(t.h, 1)} m</b><br>Expected crown: ${fmt(t.crown, 1)} m` +
+      `<br>Est. DBH: ~${fmt(d)} cm (pine)<br>Est. stem volume: ~${fmt(v, 2)} m³`;
   }
 
   function histogram(hs) {
@@ -307,10 +280,10 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
     return `<div class="title">Tree heights [m]</div><svg viewBox="-6 0 ${W + 12} ${H}" width="100%" role="img" aria-label="Histogram of tree heights">${bars}${ticks}</svg>`;
   }
 
-  function render(label, w, opt) {
+  function render(label, w) {
     const r = $('result');
     if (w.data_ha === 0) {
-      r.innerHTML = `<div class="title">${label}</div><div class="warn">This area lies outside the LiDAR data. Choose a parcel inside the dashed outline.</div>`;
+      r.innerHTML = `<div class="title">${label}</div><div class="warn">No elevation data for this area.</div>`;
       return;
     }
     const lo = Math.min(w.vol_trees, w.vol_canopy), hi = Math.max(w.vol_trees, w.vol_canopy);
@@ -319,15 +292,15 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
     const p = (q) => w.heights[Math.min(w.heights.length - 1, Math.floor(q * (w.heights.length - 1)))];
     r.innerHTML = `
       <div class="title">${label}</div>
-      ${cover < 0.99 ? `<div class="warn">LiDAR data cover only ${fmt(cover * 100)}% of this area (${fmt(w.data_ha, 2)} ha). The numbers below refer to that part.</div>` : ''}
-      <div class="big"><div class="l">Timber volume estimate (stem wood over bark, 2014)</div>
+      ${cover < 0.97 ? `<div class="warn">Elevation data cover only ${fmt(cover * 100)}% of this area (${fmt(w.data_ha, 2)} ha). The numbers below refer to that part.</div>` : ''}
+      <div class="big"><div class="l">Timber volume estimate (stem wood over bark)</div>
         <div class="v">${w.forest_ha > 0 ? fmt(lo) + '–' + fmt(hi) + ' m³' : '0 m³'}</div>
         ${w.forest_ha > 0 ? `<div class="l">${fmt(lo / w.forest_ha)}–${fmt(hi / w.forest_ha)} m³ per ha of forest</div>` : ''}</div>
       <table>
         <tr><td>Area</td><td>${fmt(w.area_ha, 2)} ha</td></tr>
         <tr><td>Forest (canopy ≥ 5 m)</td><td>${fmt(w.forest_ha, 2)} ha (${fmt(100 * w.forest_ha / w.data_ha)}%)</td></tr>
         <tr><td>Shrubs / regeneration 2–5 m</td><td>${fmt(w.shrub_ha, 2)} ha</td></tr>
-        <tr><td>Trees detected (&gt; 5 m)</td><td>${fmt(w.trees)}${w.forest_ha > 0 ? ` <small>(${fmt(w.trees / w.forest_ha)}/ha)</small>` : ''}</td></tr>
+        <tr><td>Tree tops detected (&gt; 5 m)</td><td>${fmt(w.trees)}${w.forest_ha > 0 ? ` <small>(${fmt(w.trees / w.forest_ha)}/ha)</small>` : ''}</td></tr>
         ${w.trees ? `<tr><td>Tree height: mean / median</td><td>${fmt(w.h_mean, 1)} / ${fmt(p(0.5), 1)} m</td></tr>
         <tr><td>Tree height: 10–90% / max</td><td>${fmt(p(0.1), 1)}–${fmt(p(0.9), 1)} / ${fmt(w.heights[w.heights.length - 1], 1)} m</td></tr>
         <tr><td>Estimated mean DBH</td><td>${fmt(w.dbh_mean)} cm</td></tr>` : ''}
@@ -335,7 +308,7 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
         <tr><td>B) from canopy height &amp; closure</td><td>${fmt(w.vol_canopy)} m³${per(w.vol_canopy)}</td></tr>
       </table>
       ${histogram(w.heights)}
-      <p class="note">An estimate, not a measurement: the laser sees height, not stem diameter. A) assumes DBH = 1.3·h − 2.5 cm and a pine form factor; it tends to underestimate (suppressed trees are hidden). B) assumes a basal area of 28 m²/ha in fully stocked stands. Expect ±25%, and 12 years of growth or felling since 2014.</p>
+      <p class="note">An estimate, not a measurement. The national surface model is coarser than a raw point cloud, so trees in dense stands merge and the tree count is usually too low; method B is the steadier number. The models assume pine; broadleaves and spruce differ. The scanning year depends on the region.</p>
       <div id="bdl"></div>`;
   }
 
@@ -345,18 +318,18 @@ svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
     box.innerHTML = '<h2>Forest Data Bank (BDL)</h2><div class="note">Asking bdl.lasy.gov.pl for forest subcompartments…</div>';
     try {
       const { rdlp, items } = await core.bdl(polys);
+      if (!$('bdl')) return;
       if (!items.length) { box.innerHTML = '<h2>Forest Data Bank (BDL)</h2><div class="note">No State Forests subcompartments in this area (probably a private forest).</div>'; return; }
-      bdlLayer = L.layerGroup(items.map(p => L.polygon(p._polys.map(pp => pp.map(r => r.map(([x, y]) => { const [lon, lat] = core.toWGS(x, y); return [lat, lon]; }))),
+      bdlLayer = L.layerGroup(items.map(p => L.polygon(p._polys.map(pp => pp.map(r => r.map(([x, y]) => ll(x, y)))),
         { color: '#1d4e1d', weight: 1.5, fill: false, dashArray: '2 3' }).bindTooltip(String(p.adr_for || '')))).addTo(map);
       box.innerHTML = `<h2>Forest Data Bank (BDL), RDLP ${rdlp}</h2><table><tr><td><b>Forest address</b></td><td><b>ha here · species · age</b></td></tr>` +
         items.map(p => `<tr><td>${String(p.adr_for || '').replace(/\s+/g, ' ')}</td><td>${fmt(p._ha, 2)} · ${p.species_cd || '–'} · ${p.spec_age || '–'}</td></tr>`).join('') +
-        '</table><p class="note">Dominant species and stand age from the official forest inventory, for comparison with the LiDAR heights.</p>';
+        '</table><p class="note">Dominant species and stand age from the official forest inventory.</p>';
     } catch (err) {
-      box.innerHTML = '<h2>Forest Data Bank (BDL)</h2><div class="note">The BDL service did not answer right now, so stand descriptions are missing. The LiDAR results above are complete.</div>';
+      box.innerHTML = '<h2>Forest Data Bank (BDL)</h2><div class="note">The BDL service did not answer right now, so stand descriptions are missing.</div>';
     }
   }
 
-  // shared link: app.html#parcel=<ID>
   const m = location.hash.match(/parcel=([^&]+)/);
   if (m) { $('q').value = decodeURIComponent(m[1]); $('search').requestSubmit(); }
 })();
