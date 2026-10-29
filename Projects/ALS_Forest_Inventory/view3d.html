@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALS point cloud 3D – Wierzchowiska pine forest | Karol Pietruszka</title>
+<link rel="icon" type="image/x-icon" href="../../favicon.ico">
+<style>
+:root{--bg:#121714;--panel:#1b221dee;--line:#2d372f;--text:#e7ece8;--muted:#93a097;--accent:#f4894c;--green:#7fb069}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px 'Raleway','Segoe UI',system-ui,sans-serif;overflow:hidden}
+#scene{position:fixed;inset:0}
+.panel{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+#menu{top:12px;left:12px;width:250px;box-sizing:border-box}
+#menu h1{font-size:16px;margin:0 0 2px;display:flex;justify-content:space-between;align-items:center}
+#menu .sub{color:var(--muted);font-size:12px;margin-bottom:10px}
+#menu.min>*:not(h1){display:none}
+label{display:block;color:var(--muted);font-size:12px;margin:10px 0 4px}
+select,button{width:100%;background:#121714;color:var(--text);border:1px solid var(--line);border-radius:5px;padding:6px 8px;font:inherit;font-size:13px;cursor:pointer}
+#hide{width:auto;padding:0 9px;line-height:22px}
+input[type=range]{width:100%}
+.row{display:flex;gap:6px;margin-top:10px}
+.row button.on{background:var(--green);color:#0e1210;border-color:var(--green)}
+#legend{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6}
+#legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+#legend .bar{height:10px;border-radius:2px;margin:3px 0}
+#legend .ends{display:flex;justify-content:space-between}
+#help{left:12px;bottom:12px;color:var(--muted);font-size:12px;padding:6px 10px}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:15px}
+@media (max-width:640px){#menu{width:calc(100% - 24px)}#help{display:none}}
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<div id="loading">Loading 320,000 LiDAR points…</div>
+<div class="panel" id="menu">
+  <h1>ALS point cloud <button id="hide" title="Hide / show the menu">–</button></h1>
+  <div class="sub">180 × 180 m of the pine forest, April 2014 · <span id="count"></span></div>
+  <label for="mode">Colour by</label>
+  <select id="mode">
+    <option value="tree">Segmented trees</option>
+    <option value="hag">Height above ground</option>
+    <option value="rgb">Orthophoto colour (RGB)</option>
+    <option value="cls">Classification</option>
+    <option value="zw">Crown closure</option>
+  </select>
+  <label for="size">Point size</label>
+  <input type="range" id="size" min="0.1" max="1.2" step="0.05" value="0.45">
+  <div class="row"><button id="ground" class="on" type="button">Ground</button><button id="spin" type="button">Rotate</button></div>
+  <div id="legend"></div>
+</div>
+<div class="panel" id="help">Drag to rotate · right-drag to pan · wheel to zoom</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="data/chmura.js"></script>
+<script>
+(async function () {
+  const d = ALS.chmura;
+  const bin = Uint8Array.from(atob(d.b64), c => c.charCodeAt(0));
+  const buf = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+  const n = d.n;
+  let o = 0;
+  const xyz = new Int16Array(buf, 0, 3 * n); o += 6 * n;
+  const rgb = new Uint8Array(buf, o, 3 * n); o += 3 * n;
+  const cls = new Uint8Array(buf, o, n); o += n;
+  const hag = new Uint8Array(buf, o, n); o += n;
+  const zw = new Uint8Array(buf, o, n); o += n;
+  const tree = new Uint8Array(buf, o, n);
+  document.getElementById('count').textContent = n.toLocaleString('en-GB') + ' points';
+
+  const pos = new Float32Array(3 * n);
+  for (let i = 0; i < n; i++) {   // LiDAR x,y,z [cm] -> three.js x, up, -y [m]
+    pos[3 * i] = xyz[3 * i] / 100; pos[3 * i + 1] = xyz[3 * i + 2] / 100; pos[3 * i + 2] = -xyz[3 * i + 1] / 100;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const col = new Float32Array(3 * n);
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mat = new THREE.PointsMaterial({ size: 0.45, vertexColors: true, sizeAttenuation: true });
+  const pts = new THREE.Points(geo, mat);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x121714);
+  scene.add(pts);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  document.getElementById('scene').appendChild(renderer.domElement);
+  const cam = new THREE.PerspectiveCamera(55, 1, 0.5, 2000);
+  cam.position.set(150, 120, 150);
+  const ctl = new THREE.OrbitControls(cam, renderer.domElement);
+  ctl.target.set(0, 15, 0);
+  ctl.enableDamping = true;
+  ctl.maxPolarAngle = Math.PI * 0.495;
+  function resize() { renderer.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }
+  addEventListener('resize', resize); resize();
+
+  // --- colours ---
+  const ramp = (stops, t) => {
+    t = Math.min(1, Math.max(0, t));
+    for (let k = 1; k < stops.length; k++) {
+      if (t <= stops[k][0]) {
+        const [t0, a] = stops[k - 1], [t1, b] = stops[k], f = (t - t0) / (t1 - t0 || 1);
+        return [0, 1, 2].map(j => (a[j] + (b[j] - a[j]) * f) / 255);
+      }
+    }
+    return stops[stops.length - 1][1].map(v => v / 255);
+  };
+  const VIR = [[0, [68, 1, 84]], [0.25, [59, 82, 139]], [0.5, [33, 145, 140]], [0.75, [94, 201, 98]], [1, [253, 231, 37]]];
+  const RYG = [[0, [215, 48, 39]], [0.5, [254, 224, 139]], [1, [26, 152, 80]]];
+  const CLS = { 2: [0.62, 0.48, 0.34], 3: [0.66, 0.80, 0.42], 4: [0.33, 0.66, 0.30], 5: [0.13, 0.45, 0.20], 12: [0.5, 0.5, 0.5] };
+  const GROUND = [0.45, 0.38, 0.30];
+  const hsl = (h, s, l) => { const c = new THREE.Color().setHSL(h, s, l); return [c.r, c.g, c.b]; };
+  const legends = {
+    tree: '<div>Each tree detected by the watershed segmentation gets its own colour. Ground and points outside crowns are brown/grey.</div>',
+    hag: '<div class="bar" style="background:linear-gradient(90deg,#440154,#3b528b,#21918c,#5ec962,#fde725)"></div><div class="ends"><span>0 m</span><span>32 m</span></div>',
+    rgb: '<div>Colour taken from the orthophoto during the 2014 flight.</div>',
+    cls: '<i style="background:#9e7a57"></i>ground<br><i style="background:#a8cc6b"></i>low vegetation<br><i style="background:#54a84d"></i>medium vegetation<br><i style="background:#217333"></i>high vegetation<br><i style="background:#9e9e9e"></i>flight-line overlap',
+    zw: '<div class="bar" style="background:linear-gradient(90deg,#d73027,#fee08b,#1a9850)"></div><div class="ends"><span>open crown (≤ 0.4)</span><span>dense (1.0)</span></div>',
+  };
+  // class 12 (flight-line overlap) holds both ground and vegetation, so use height above ground too
+  const isGround = (i) => cls[i] === 2 || (cls[i] !== 3 && cls[i] !== 4 && cls[i] !== 5 && hag[i] < 2);
+  function paint(mode) {
+    for (let i = 0; i < n; i++) {
+      let c;
+      const g = isGround(i);
+      if (mode === 'rgb') c = [rgb[3 * i] / 255, rgb[3 * i + 1] / 255, rgb[3 * i + 2] / 255];
+      else if (mode === 'cls') c = CLS[cls[i]] || (g ? CLS[2] : [0.62, 0.62, 0.62]);
+      else if (mode === 'hag') c = g ? GROUND : ramp(VIR, hag[i] / 5 / 32);
+      else if (mode === 'zw') c = tree[i] && zw[i] ? ramp(RYG, (zw[i] / 250 - 0.4) / 0.6) : g ? GROUND : [0.35, 0.35, 0.35];
+      else c = tree[i] ? hsl(((tree[i] * 47) % 256) / 256 * 0.55 + 0.05, 0.65, 0.5) : g ? GROUND : [0.4, 0.4, 0.4];
+      col[3 * i] = c[0]; col[3 * i + 1] = c[1]; col[3 * i + 2] = c[2];
+    }
+    geo.attributes.color.needsUpdate = true;
+    document.getElementById('legend').innerHTML = legends[mode];
+  }
+
+  // ground on/off: move ground points to the end of the draw range by reordering once
+  const order = [...Array(n).keys()].sort((a, b) => isGround(a) - isGround(b));
+  const reorder = (arr, k) => { const c = arr.slice(); for (let i = 0; i < n; i++) for (let j = 0; j < k; j++) arr[k * i + j] = c[k * order[i] + j]; };
+  reorder(pos, 3); reorder(rgb, 3);
+  [cls, hag, zw, tree].forEach(a => reorder(a, 1));
+  let nVeg = 0;
+  while (nVeg < n && !isGround(nVeg)) nVeg++;
+  geo.attributes.position.needsUpdate = true;
+
+  const $ = (id) => document.getElementById(id);
+  $('mode').onchange = (e) => paint(e.target.value);
+  $('size').oninput = (e) => { mat.size = +e.target.value; };
+  $('ground').onclick = () => {
+    const on = $('ground').classList.toggle('on');
+    geo.setDrawRange(0, on ? n : nVeg);
+  };
+  $('spin').onclick = () => { ctl.autoRotate = $('spin').classList.toggle('on'); };
+  $('hide').onclick = () => { $('menu').classList.toggle('min'); $('hide').textContent = $('menu').classList.contains('min') ? '+' : '–'; };
+  paint('tree');
+  $('loading').remove();
+
+  (function loop() { requestAnimationFrame(loop); ctl.update(); renderer.render(scene, cam); })();
+})().catch(e => { document.getElementById('loading').textContent = 'Could not start the 3D view: ' + e.message; });
+</script>
+</body>
+</html>

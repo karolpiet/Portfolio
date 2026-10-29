@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forest Inventory from Airborne LiDAR – Wierzchowiska | Karol Pietruszka</title>
+  <meta name="description" content="Airborne LiDAR (ALS) processing of a 255 ha pine forest: terrain and canopy height models, 70,554 individual trees, crown closure and an in-browser calculator of forest area and timber volume for any cadastral parcel.">
+  <meta property="og:title" content="Forest Inventory from Airborne LiDAR | Karol Pietruszka">
+  <meta property="og:image" content="https://karolpiet.github.io/Portfolio/Projects/ALS_Forest_Inventory/Data/thumb.jpg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ALS_styles.css">
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="logo">
+        <img src="../../logo_tree.svg" alt="Logo" class="logo-icon">
+        <span class="logo-text">Karol Pietruszka</span>
+      </div>
+      <a href="../../index.html" class="back-to-portfolio"><i class="fas fa-arrow-left"></i> <span>Back to Portfolio</span></a>
+      <a href="../../index.html#projects" class="back-to-projects"><i class="fas fa-th-large"></i> <span>Back to Projects</span></a>
+    </div>
+  </nav>
+
+  <div class="hero-section">
+    <div class="image-container">
+      <img id="mapImage" src="Data/hero_3d.jpg" alt="Airborne LiDAR point cloud of a pine forest, every detected tree in its own colour" class="map-image">
+      <div class="enlarge-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+        </svg>
+      </div>
+    </div>
+
+    <div id="imageModal" class="modal">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <img class="modal-content" id="modalImage">
+    </div>
+  </div>
+
+  <section class="interactive-map-section">
+    <div class="interactive-map-header">
+      <h2><i class="fas fa-map-marked-alt"></i> How much forest is on a parcel?</h2>
+      <p>Click a cadastral parcel inside the dashed outline (or type its ID, draw an area, upload a KML/GPX/GeoJSON). The parcel boundary comes live from the GUGiK register (ULDK), the forest statistics are computed from the LiDAR models right in your browser, and the official stand description is pulled from the Forest Data Bank (BDL). Try parcel <code>140905_5.0031.129/6</code>.</p>
+    </div>
+    <div class="map-frame-wrapper app-wrapper">
+      <iframe src="app.html" class="map-frame" title="Forest on a parcel – interactive calculator" loading="lazy"></iframe>
+    </div>
+    <a href="app.html" target="_blank" class="map-fullscreen-link"><i class="fas fa-up-right-from-square"></i> Open the calculator full-screen</a>
+  </section>
+
+  <section class="interactive-map-section">
+    <div class="interactive-map-header">
+      <h2><i class="fas fa-cube"></i> Explore the point cloud in 3D</h2>
+      <p>A 180 × 180 m sample of the classified point cloud (thinned to 320,000 points). Colour it by segmented tree, height above ground, orthophoto colour, class or crown closure. Drag to rotate, right-drag to pan, scroll to zoom.</p>
+    </div>
+    <div class="map-frame-wrapper viewer-wrapper">
+      <button type="button" class="viewer-poster" id="viewerPoster" aria-label="Load the interactive 3D view">
+        <img src="Data/hero_3d.jpg" alt="" loading="lazy">
+        <span class="viewer-play"><i class="fas fa-cube"></i> Load interactive 3D view <small>(about 3.5 MB)</small></span>
+      </button>
+    </div>
+    <a href="view3d.html" target="_blank" class="map-fullscreen-link"><i class="fas fa-up-right-from-square"></i> Open full-screen in a new tab</a>
+  </section>
+
+  <div class="project-container">
+    <div class="project-description">
+      <h1>Forest Inventory from Airborne LiDAR – Wierzchowiska Pine Forest</h1>
+      <div class="description-content">
+        <p>Poland publishes airborne laser scanning (ALS) for the whole country through the national Geoportal. I took two ISOK sheets covering a pine forest near Wierzchowiska in east-central Poland (Masovian Voivodeship): 46.4 million points, about 17 points per m², flown in April 2014 and already classified into ground, vegetation and noise. From that raw point cloud I built a small forest inventory and turned it into a tool anyone can use from a browser.</p>
+
+        <h3>Processing pipeline (Python)</h3>
+        <ol>
+          <li><strong>Raster models:</strong> digital terrain model (DTM) from ground points, surface model (DSM) from first returns and the canopy height model CHM = DSM − DTM, all at 0.5 m.</li>
+          <li><strong>Individual trees:</strong> tree tops are local maxima of the smoothed CHM with a search window that grows with tree height; crowns are delineated with marker-controlled watershed segmentation.</li>
+          <li><strong>Crown closure:</strong> for each crown, the share of first laser returns that stopped in the crown instead of reaching the ground. Open crowns mark stand edges, gaps and weaker trees.</li>
+          <li><strong>Timber volume:</strong> two independent estimates. A) sum over detected trees, with DBH from a height–diameter relation for pine and a stem form factor. B) area-based: canopy height (95th percentile) × closure × an assumed basal area of 28 m²/ha, in 20 × 20 m cells. The truth is usually between them.</li>
+          <li><strong>Web version:</strong> the models are packed into compact binary files (CHM at 0.5 m, 70,554 trees) and the parcel calculation was ported to JavaScript. It reproduces the Python tool to within 0.1% on five test areas.</li>
+        </ol>
+
+        <figure>
+          <img src="Data/maps.jpg" alt="Hillshaded terrain model, canopy height model and detected tree tops" loading="lazy">
+          <figcaption>Terrain model (hillshade), canopy height model and a 200 m detail with the detected tree tops (orange) on the CHM.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="Data/heights.png" alt="Histogram of tree heights and crown closure by tree height" loading="lazy">
+          <figcaption>Most of the stand is mature pine of 18–27 m; the second peak at 6–10 m is young plantations. Crown closure (median and interquartile range) increases with tree height.</figcaption>
+        </figure>
+
+        <h3>What I deliberately did not do</h3>
+        <p>An early version tried to split trees into "conifers" and "broadleaves" with a clustering algorithm. Clustering always returns as many groups as you ask for, and the official forest data show this stand is pure pine, so the "broadleaves" were an artefact. I removed the classification and show crown closure instead, which is a real, measured property.</p>
+
+        <div class="caveat-box">
+          <strong>Limits:</strong> the laser sees tree height, not stem diameter, so volumes are estimates with an uncertainty of roughly ±25% and they describe the forest as it was in April 2014. For a timber sale you need field measurements or the official stand description. Trees below the main canopy are mostly hidden, and touching crowns can merge into one tree.
+        </div>
+
+        <a href="https://github.com/karolpiet/Portfolio/tree/main/Projects/ALS_Forest_Inventory/tools" target="_blank" class="repo-link"><i class="fab fa-github"></i> Processing scripts on GitHub</a>
+      </div>
+    </div>
+
+    <div class="project-stats">
+      <div class="tech-section">
+        <h2><i class="fas fa-tree"></i> Study area</h2>
+        <div class="tech-card">
+          <h3>Results from the LiDAR data</h3>
+          <ul class="plot-facts">
+            <li><span>Area with LiDAR data</span><strong>255 ha</strong></li>
+            <li><span>Forest (canopy ≥ 5 m)</span><strong>180 ha</strong></li>
+            <li><span>Trees detected</span><strong>70,554</strong></li>
+            <li><span>Mean / max tree height</span><strong>20.4 / 34.1 m</strong></li>
+            <li><span>Mean crown diameter</span><strong>5.4 m</strong></li>
+            <li><span>Timber volume (estimate)</span><strong>36–52 k m³</strong></li>
+          </ul>
+          <p class="plot-note">Scots pine stands, data from April 2014. Volume as a range of the two methods, 200–290 m³ per ha of forest.</p>
+        </div>
+      </div>
+      <div class="tech-section">
+        <h2><i class="fas fa-cogs"></i> Technical Details</h2>
+        <div class="tech-card">
+          <h3>Platform & Tools</h3>
+          <ul>
+            <li>Python (laspy, NumPy, SciPy, rasterio, scikit-image)</li>
+            <li>JavaScript: Leaflet, proj4js, three.js</li>
+            <li>QGIS for checking the results</li>
+            <li>Static site, no server: runs on GitHub Pages</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h3>Data Sources</h3>
+          <ul>
+            <li>ALS point clouds, ISOK 2014 (GUGiK)</li>
+            <li>Parcel boundaries: ULDK and KIEG services (GUGiK)</li>
+            <li>Orthophoto: Geoportal WMS</li>
+            <li>Stand descriptions: Forest Data Bank (BDL)</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h3>Methods</h3>
+          <ul>
+            <li>DTM / DSM / CHM rasterisation</li>
+            <li>Local-maximum tree detection, watershed crowns</li>
+            <li>Crown closure from first returns</li>
+            <li>Tree- and area-based volume models</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="als_scripts.js"></script>
+</body>
+</html>

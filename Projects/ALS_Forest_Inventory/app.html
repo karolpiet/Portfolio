@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forest on a Parcel – ALS calculator | Karol Pietruszka</title>
+<meta name="description" content="Pick a cadastral parcel or draw an area and get forest area, tree count, heights and a timber volume estimate from airborne LiDAR, computed in the browser.">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Raleway:wght@400;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="../../favicon.ico">
+<style>
+:root{--forest:#1d4e1d;--pine:#2e6d2e;--orange:#f4894c;--yellow:#f4d35e;--red:#d7263d;
+  --text:#2b302b;--muted:#68736a;--line:#dfe5df;--panel:#ffffff;--bg:#f5f7fa}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:'Raleway',system-ui,sans-serif;color:var(--text);background:var(--bg)}
+#app{display:flex;height:100%}
+#panel{width:370px;flex:none;background:var(--panel);border-right:1px solid var(--line);overflow:auto;padding:16px 18px 24px}
+#map{flex:1;min-width:0}
+h1{font-family:'Montserrat',sans-serif;font-size:1.25rem;color:var(--forest);margin:0 0 4px}
+h2{font-family:'Montserrat',sans-serif;font-size:.95rem;color:var(--forest);margin:18px 0 8px}
+.sub{color:var(--muted);font-size:.85rem;margin:0 0 12px;line-height:1.45}
+form{display:flex;gap:6px}
+input[type=text]{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:.9rem}
+button{font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;border-radius:6px;border:1px solid var(--pine);
+  background:#fff;color:var(--pine);padding:7px 11px}
+button:hover{border-color:var(--orange);color:var(--orange)}
+button.primary{background:var(--pine);color:#fff}
+button.primary:hover{background:var(--orange);border-color:var(--orange);color:#fff}
+button.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.hint{font-size:.8rem;color:var(--muted);margin-top:6px;min-height:1.1em}
+#status{margin-top:12px;font-size:.88rem;padding:9px 11px;border-radius:6px;display:none}
+#status.info{display:block;background:#eef5ee;color:var(--forest)}
+#status.err{display:block;background:#fdecee;color:#8f1626}
+.title{font-weight:600;margin:14px 0 2px;font-size:.95rem}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:top}
+td:last-child{text-align:right;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.big{background:#f2f7f2;border-radius:8px;padding:10px 12px;margin:10px 0}
+.big .v{font-family:'Montserrat',sans-serif;font-size:1.35rem;color:var(--forest);font-weight:700}
+.big .l{font-size:.78rem;color:var(--muted)}
+.note{font-size:.78rem;color:var(--muted);line-height:1.45;margin-top:8px}
+.warn{font-size:.82rem;background:#fff7e0;border-left:3px solid var(--yellow);padding:6px 9px;margin:8px 0}
+.choices button{display:block;width:100%;text-align:left;margin-top:5px;font-weight:400}
+svg text{font:10px Raleway,sans-serif;fill:var(--muted)}
+.legend{background:#fffffff0;padding:8px 10px;border-radius:6px;font:12px Raleway,sans-serif;box-shadow:0 1px 6px #0003;line-height:1.5}
+.legend .bar{width:160px;height:10px;border-radius:2px;margin:3px 0}
+.legend .ends{display:flex;justify-content:space-between}
+.leaflet-container{font-family:'Raleway',sans-serif}
+#toggle{display:none}
+@media (max-width:760px){
+  #app{flex-direction:column-reverse}
+  #panel{width:auto;height:46%;border-right:0;border-top:1px solid var(--line)}
+  #panel.min{height:auto;max-height:52px;overflow:hidden}
+  #toggle{display:inline-block;float:right;padding:3px 9px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="panel">
+    <button id="toggle" type="button" aria-label="Hide or show the panel">▾</button>
+    <h1>Forest on a parcel</h1>
+    <p class="sub">Airborne LiDAR (ALS, April 2014) of a pine forest near Wierzchowiska, Poland. Pick a cadastral parcel, draw an area or upload a boundary: forest area, trees and a timber volume estimate are computed in your browser.</p>
+
+    <form id="search">
+      <input type="text" id="q" placeholder="Parcel ID, e.g. 140905_5.0031.129/6" aria-label="Parcel ID or precinct and number">
+      <button class="primary" type="submit">Find</button>
+    </form>
+    <div class="tools">
+      <button type="button" id="mPick" class="on">Click a parcel</button>
+      <button type="button" id="mDraw">Draw an area</button>
+      <button type="button" id="mFile">Upload KML / GPX / GeoJSON</button>
+      <button type="button" id="mAll">Whole study area</button>
+    </div>
+    <input type="file" id="file" accept=".kml,.gpx,.geojson,.json" hidden>
+    <div class="hint" id="hint">Click anywhere inside the outlined study area to select a parcel.</div>
+    <div id="status"></div>
+    <div id="result"></div>
+  </aside>
+  <div id="map"></div>
+</div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/proj4.js"></script>
+<script src="data/mapa.js"></script>
+<script src="data/drzewa.js"></script>
+<script src="als-core.js"></script>
+<script>
+(function () {
+  const core = ALS.core, M = ALS.mapa;
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v, d = 0) => Number(v).toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  // --- map and layers -----------------------------------------------------
+  const map = L.map('map', { zoomControl: true, preferCanvas: true }).fitBounds(M.bounds);
+  const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { maxZoom: 20, maxNativeZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+  const orto = L.tileLayer.wms('https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMS/StandardResolution',
+    { layers: 'Raster', format: 'image/jpeg', maxZoom: 20, attribution: 'Orthophoto &copy; GUGiK' });
+  const kieg = L.tileLayer.wms('https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow',
+    { layers: 'dzialki,numery_dzialek', format: 'image/png', transparent: true, minZoom: 15, maxZoom: 20,
+      attribution: 'Parcels &copy; GUGiK (KIEG)' });
+  const bdlWms = L.tileLayer.wms('https://mapserver.bdl.lasy.gov.pl/ArcGIS/services/WMS_BDL/mapserver/WMSServer',
+    { layers: '3', format: 'image/png', transparent: true, version: '1.3.0', minZoom: 14, maxZoom: 20,
+      attribution: 'Forest Data Bank &copy; BDL' });
+  const lidar = 'ALS data &copy; GUGiK (ISOK 2014), processing K. Pietruszka';
+  const chm = L.imageOverlay('img/chm.png', M.bounds, { opacity: 0.85, attribution: lidar });
+  const dtm = L.imageOverlay('img/dtm.png', M.bounds, { opacity: 0.9, attribution: lidar });
+  const zw = L.imageOverlay('img/zwarcie.png', M.bounds, { opacity: 0.9, attribution: lidar });
+  const outline = L.polygon(M.zasieg, { color: '#f4894c', weight: 2, fill: false, dashArray: '6 4', interactive: false });
+  const trees = L.layerGroup();
+  orto.addTo(map); chm.addTo(map); outline.addTo(map); kieg.addTo(map);
+
+  L.control.layers(
+    { 'Orthophoto (Geoportal)': orto, 'OpenStreetMap': osm },
+    { 'Canopy height (CHM)': chm, 'Terrain (DTM hillshade)': dtm, 'Crown closure': zw,
+      'Tree tops (zoom in)': trees, 'Cadastral parcels': kieg, 'Forest subcompartments (BDL)': bdlWms,
+      'Study area': outline },
+    { collapsed: window.innerWidth < 760 }).addTo(map);
+  L.control.scale({ imperial: false }).addTo(map);
+
+  // legend for the active raster overlay
+  const legends = {
+    chm: ['Canopy height', 'linear-gradient(90deg,#fde725,#5ec962,#21918c,#3b528b,#440154)', '2 m', '32 m'],
+    dtm: ['Terrain (DTM)', 'linear-gradient(90deg,#2e7846,#d6c98c,#965f3c)', '169 m', '185 m a.s.l.'],
+    zw: ['Crown closure', 'linear-gradient(90deg,#d73027,#fee08b,#1a9850)', 'open (≤ 0.4)', 'dense (1.0)'],
+  };
+  const legend = L.control({ position: 'bottomright' });
+  legend.onAdd = () => L.DomUtil.create('div', 'legend');
+  legend.addTo(map);
+  function updateLegend() {
+    const on = [['zw', zw], ['dtm', dtm], ['chm', chm]].filter(([, l]) => map.hasLayer(l)).map(([k]) => k);
+    const el = legend.getContainer();
+    el.style.display = on.length ? '' : 'none';
+    el.innerHTML = on.map(k => { const [t, g, a, b] = legends[k];
+      return `<div><b>${t}</b><div class="bar" style="background:${g}"></div><div class="ends"><span>${a}</span><span>${b}</span></div></div>`; }).join('');
+  }
+  map.on('overlayadd overlayremove', updateLegend);
+  updateLegend();
+
+  // tree tops: crowns drawn as circles for the trees in view (zoom >= 17)
+  let treeData = null;
+  core.loadTrees().then(t => { treeData = t; drawTrees(); });
+  function drawTrees() {
+    trees.clearLayers();
+    if (!treeData || !map.hasLayer(trees) || map.getZoom() < 17) return;
+    const b = map.getBounds();
+    const sw = core.toPL(b.getWest(), b.getSouth()), ne = core.toPL(b.getEast(), b.getNorth());
+    let n = 0;
+    for (let i = 0; i < treeData.n && n < 5000; i++) {
+      const x = treeData.x[i], y = treeData.y[i];
+      if (x < sw[0] || x > ne[0] || y < sw[1] || y > ne[1]) continue;
+      const [lon, lat] = core.toWGS(x, y), h = treeData.hgt[i];
+      const c = L.circle([lat, lon], { radius: Math.max(treeData.crown[i] / 2, 0.8), weight: 1, color: '#fff',
+        fillColor: h > 25 ? '#1d4e1d' : h > 18 ? '#2e8b2e' : '#8bc34a', fillOpacity: 0.55 });
+      c.bindPopup(() => treePopup(i));
+      trees.addLayer(c); n++;
+    }
+  }
+  function treePopup(i) {
+    const h = treeData.hgt[i], [v, d] = core.treeVolume(h);
+    return `<b>Tree #${i + 1}</b> (pine)<br>Height: <b>${fmt(h, 1)} m</b><br>Crown diameter: ${fmt(treeData.crown[i], 1)} m` +
+      `<br>Crown closure: ${fmt(treeData.closure[i], 2)}<br>Est. DBH: ~${fmt(d)} cm<br>Est. stem volume: ~${fmt(v, 2)} m³`;
+  }
+  map.on('moveend overlayadd', drawTrees);
+
+  // --- UI state -------------------------------------------------------------
+  let mode = 'pick', drawPts = [], drawLine = null, areaLayer = null, bdlLayer = null, busy = false;
+  const status = (msg, cls = 'info') => { const s = $('status'); s.className = msg ? cls : ''; s.innerHTML = msg || ''; };
+  function setMode(m) {
+    mode = m;
+    $('mPick').classList.toggle('on', m === 'pick');
+    $('mDraw').classList.toggle('on', m === 'draw');
+    m === 'draw' ? map.doubleClickZoom.disable() : map.doubleClickZoom.enable();
+    $('hint').innerHTML = m === 'pick' ? 'Click anywhere inside the outlined study area to select a parcel.'
+      : 'Click to add corners, double-click (or click the first corner) to finish. <a href="#" id="undo">Undo last point</a>';
+    if (m === 'draw') $('undo').onclick = (e) => { e.preventDefault(); drawPts.pop(); redrawLine(); };
+    map.getContainer().style.cursor = m === 'draw' ? 'crosshair' : '';
+    drawPts = []; redrawLine();
+  }
+  $('mPick').onclick = () => setMode('pick');
+  $('mDraw').onclick = () => setMode(mode === 'draw' ? 'pick' : 'draw');
+  $('mFile').onclick = () => $('file').click();
+  $('mAll').onclick = () => run('Whole study area', [[M.zasieg.map(([lat, lon]) => core.toPL(lon, lat))]], { noBdl: true });
+  $('toggle').onclick = () => { $('panel').classList.toggle('min'); $('toggle').textContent = $('panel').classList.contains('min') ? '▴' : '▾'; setTimeout(() => map.invalidateSize(), 50); };
+
+  function redrawLine() {
+    if (drawLine) map.removeLayer(drawLine);
+    drawLine = drawPts.length ? L.polyline(drawPts, { color: '#f4894c', weight: 3, dashArray: '4 4' }).addTo(map) : null;
+  }
+
+  map.on('click', async (e) => {
+    if (busy) return;
+    if (mode === 'draw') {
+      if (drawPts.length >= 3 && map.latLngToContainerPoint(drawPts[0]).distanceTo(e.containerPoint) < 12) return finishDraw();
+      drawPts.push(e.latlng); redrawLine(); return;
+    }
+    const [x, y] = core.toPL(e.latlng.lng, e.latlng.lat);
+    status('Looking up the parcel in the GUGiK register…');
+    try { showParcels(await core.parcelByXY(x, y)); } catch (err) { status(err.message, 'err'); }
+  });
+  map.on('dblclick', () => { if (mode === 'draw' && drawPts.length >= 3) finishDraw(); });
+  function finishDraw() {
+    // a double-click also fires two clicks; drop duplicate points
+    const pts = drawPts.filter((p, i) => i === 0 || p.distanceTo(drawPts[i - 1]) > 0.5);
+    const ring = pts.map(p => core.toPL(p.lng, p.lat));
+    ring.push(ring[0]);
+    setMode('pick');
+    run('Drawn area', [[ring]]);
+  }
+
+  $('search').onsubmit = async (e) => {
+    e.preventDefault();
+    const q = $('q').value.trim();
+    if (!q) return;
+    status('Looking up the parcel in the GUGiK register…');
+    try { showParcels(await core.parcelById(q)); } catch (err) { status(err.message, 'err'); }
+  };
+
+  $('file').onchange = async () => {
+    const f = $('file').files[0];
+    if (!f) return;
+    try { run(f.name, core.parseFile(f.name, await f.text())); } catch (err) { status(err.message, 'err'); }
+    $('file').value = '';
+  };
+
+  function showParcels(list) {
+    if (list.length === 1) return run(list[0].label, list[0].polys, { id: list[0].id });
+    status('');
+    $('result').innerHTML = '<div class="title">Several parcels match, pick one:</div><div class="choices"></div>';
+    const box = $('result').querySelector('.choices');
+    list.forEach(p => { const b = document.createElement('button'); b.type = 'button'; b.textContent = p.label + ' (' + p.id + ')';
+      b.onclick = () => run(p.label, p.polys, { id: p.id }); box.appendChild(b); });
+  }
+
+  // --- the calculation ------------------------------------------------------
+  let chmLoaded = null;
+  function loadChm() {
+    if (ALS.chm) return Promise.resolve();
+    return chmLoaded || (chmLoaded = new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = 'data/chm.js'; s.onload = ok;
+      s.onerror = () => { chmLoaded = null; fail(new Error('Could not load the canopy height model.')); };
+      document.head.appendChild(s);
+    }));
+  }
+
+  async function run(label, polys, opt = {}) {
+    if (busy) return;
+    busy = true;
+    if (areaLayer) map.removeLayer(areaLayer);
+    if (bdlLayer) { map.removeLayer(bdlLayer); bdlLayer = null; }
+    const ll = polys.map(p => p.map(r => r.map(([x, y]) => { const [lon, lat] = core.toWGS(x, y); return [lat, lon]; })));
+    areaLayer = L.polygon(ll, { color: '#d7263d', weight: 3, fillOpacity: 0.08 }).addTo(map);
+    map.fitBounds(areaLayer.getBounds(), { padding: [30, 30], maxZoom: 18 });
+    if (opt.id) history.replaceState(null, '', '#parcel=' + encodeURIComponent(opt.id));
+    $('result').innerHTML = '';
+    try {
+      if (!ALS.chm) status('Loading the canopy height model (about 7 MB, only the first time)…');
+      await loadChm();
+      status('Computing…');
+      await new Promise(r => setTimeout(r, 20));
+      const w = await core.compute(polys);
+      status('');
+      render(label, w, opt);
+      if (!opt.noBdl && w.data_ha > 0) loadBdl(polys);
+    } catch (err) {
+      status(err.message, 'err');
+    } finally { busy = false; }
+  }
+
+  function histogram(hs) {
+    if (hs.length < 5) return '';
+    const lo = 5, hi = 36, bins = new Array(hi - lo).fill(0);
+    hs.forEach(h => bins[Math.min(Math.max(Math.floor(h) - lo, 0), bins.length - 1)]++);
+    const mx = Math.max(...bins), W = 320, H = 90, bw = W / bins.length;
+    const bars = bins.map((n, i) => `<rect x="${i * bw + 0.5}" y="${H - 14 - (n / mx) * (H - 20)}" width="${bw - 1}" height="${(n / mx) * (H - 20)}" fill="#2e6d2e"><title>${i + lo}–${i + lo + 1} m: ${n} trees</title></rect>`).join('');
+    const ticks = [5, 10, 15, 20, 25, 30, 35].map(t => `<text x="${(t - lo) * bw}" y="${H - 2}" text-anchor="middle">${t}</text>`).join('');
+    return `<div class="title">Tree heights [m]</div><svg viewBox="-6 0 ${W + 12} ${H}" width="100%" role="img" aria-label="Histogram of tree heights">${bars}${ticks}</svg>`;
+  }
+
+  function render(label, w, opt) {
+    const r = $('result');
+    if (w.data_ha === 0) {
+      r.innerHTML = `<div class="title">${label}</div><div class="warn">This area lies outside the LiDAR data. Choose a parcel inside the dashed outline.</div>`;
+      return;
+    }
+    const lo = Math.min(w.vol_trees, w.vol_canopy), hi = Math.max(w.vol_trees, w.vol_canopy);
+    const per = (v) => w.forest_ha > 0 ? ` <small>(${fmt(v / w.forest_ha)} m³/ha)</small>` : '';
+    const cover = w.data_ha / w.area_ha;
+    const p = (q) => w.heights[Math.min(w.heights.length - 1, Math.floor(q * (w.heights.length - 1)))];
+    r.innerHTML = `
+      <div class="title">${label}</div>
+      ${cover < 0.99 ? `<div class="warn">LiDAR data cover only ${fmt(cover * 100)}% of this area (${fmt(w.data_ha, 2)} ha). The numbers below refer to that part.</div>` : ''}
+      <div class="big"><div class="l">Timber volume estimate (stem wood over bark, 2014)</div>
+        <div class="v">${w.forest_ha > 0 ? fmt(lo) + '–' + fmt(hi) + ' m³' : '0 m³'}</div>
+        ${w.forest_ha > 0 ? `<div class="l">${fmt(lo / w.forest_ha)}–${fmt(hi / w.forest_ha)} m³ per ha of forest</div>` : ''}</div>
+      <table>
+        <tr><td>Area</td><td>${fmt(w.area_ha, 2)} ha</td></tr>
+        <tr><td>Forest (canopy ≥ 5 m)</td><td>${fmt(w.forest_ha, 2)} ha (${fmt(100 * w.forest_ha / w.data_ha)}%)</td></tr>
+        <tr><td>Shrubs / regeneration 2–5 m</td><td>${fmt(w.shrub_ha, 2)} ha</td></tr>
+        <tr><td>Trees detected (&gt; 5 m)</td><td>${fmt(w.trees)}${w.forest_ha > 0 ? ` <small>(${fmt(w.trees / w.forest_ha)}/ha)</small>` : ''}</td></tr>
+        ${w.trees ? `<tr><td>Tree height: mean / median</td><td>${fmt(w.h_mean, 1)} / ${fmt(p(0.5), 1)} m</td></tr>
+        <tr><td>Tree height: 10–90% / max</td><td>${fmt(p(0.1), 1)}–${fmt(p(0.9), 1)} / ${fmt(w.heights[w.heights.length - 1], 1)} m</td></tr>
+        <tr><td>Estimated mean DBH</td><td>${fmt(w.dbh_mean)} cm</td></tr>` : ''}
+        <tr><td>A) sum of detected trees</td><td>${fmt(w.vol_trees)} m³${per(w.vol_trees)}</td></tr>
+        <tr><td>B) from canopy height &amp; closure</td><td>${fmt(w.vol_canopy)} m³${per(w.vol_canopy)}</td></tr>
+      </table>
+      ${histogram(w.heights)}
+      <p class="note">An estimate, not a measurement: the laser sees height, not stem diameter. A) assumes DBH = 1.3·h − 2.5 cm and a pine form factor; it tends to underestimate (suppressed trees are hidden). B) assumes a basal area of 28 m²/ha in fully stocked stands. Expect ±25%, and 12 years of growth or felling since 2014.</p>
+      <div id="bdl"></div>`;
+  }
+
+  async function loadBdl(polys) {
+    const box = $('bdl');
+    if (!box) return;
+    box.innerHTML = '<h2>Forest Data Bank (BDL)</h2><div class="note">Asking bdl.lasy.gov.pl for forest subcompartments…</div>';
+    try {
+      const { rdlp, items } = await core.bdl(polys);
+      if (!items.length) { box.innerHTML = '<h2>Forest Data Bank (BDL)</h2><div class="note">No State Forests subcompartments in this area (probably a private forest).</div>'; return; }
+      bdlLayer = L.layerGroup(items.map(p => L.polygon(p._polys.map(pp => pp.map(r => r.map(([x, y]) => { const [lon, lat] = core.toWGS(x, y); return [lat, lon]; }))),
+        { color: '#1d4e1d', weight: 1.5, fill: false, dashArray: '2 3' }).bindTooltip(String(p.adr_for || '')))).addTo(map);
+      box.innerHTML = `<h2>Forest Data Bank (BDL), RDLP ${rdlp}</h2><table><tr><td><b>Forest address</b></td><td><b>ha here · species · age</b></td></tr>` +
+        items.map(p => `<tr><td>${String(p.adr_for || '').replace(/\s+/g, ' ')}</td><td>${fmt(p._ha, 2)} · ${p.species_cd || '–'} · ${p.spec_age || '–'}</td></tr>`).join('') +
+        '</table><p class="note">Dominant species and stand age from the official forest inventory, for comparison with the LiDAR heights.</p>';
+    } catch (err) {
+      box.innerHTML = '<h2>Forest Data Bank (BDL)</h2><div class="note">The BDL service did not answer right now, so stand descriptions are missing. The LiDAR results above are complete.</div>';
+    }
+  }
+
+  // shared link: app.html#parcel=<ID>
+  const m = location.hash.match(/parcel=([^&]+)/);
+  if (m) { $('q').value = decodeURIComponent(m[1]); $('search').requestSubmit(); }
+})();
+</script>
+</body>
+</html>

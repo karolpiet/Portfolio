@@ -14,6 +14,7 @@ Open to **remote** and **on-site** opportunities in spatial analysis, remote sen
 
 | Project | What it shows | Tools |
 |---|---|---|
+| [**Forest Inventory from Airborne LiDAR**](https://karolpiet.github.io/Portfolio/Projects/ALS_Forest_Inventory/index.html) | 70,554 trees, canopy height, crown closure and timber volume for a 255 ha pine forest from national ALS data, with an in-browser calculator for any cadastral parcel | Python, laspy, rasterio, scikit-image, Leaflet, three.js |
 | [**LidarTreeSegmenter**](https://karolpiet.github.io/Portfolio/Projects/Lidar_Tree_Segmenter/index.html) *(work in progress)* | Tree detection, segmentation and DBH / height / volume estimation from terrestrial and mobile LiDAR point clouds. [Source code](https://github.com/karolpiet/LidarTreeSegmenter) | Python, laspy, NumPy, scikit-learn, three.js |
 | [**Bohemian Switzerland Fire Severity**](https://karolpiet.github.io/Portfolio/Projects/Forest_Fire_Bohemian/index.html) | dNBR burn severity mapping of the 2022 wildfire in Bohemian Switzerland National Park, restricted to forest pixels | Google Earth Engine, Sentinel-2, geemap |
 | [**Tuchola Forest Land Cover Change**](https://karolpiet.github.io/Portfolio/Projects/Tuchola/index.html) | Land cover classification and NDVI change detection (2015–2019) after the 2017 windstorm, with an interactive web map | ERDAS Imagine, Sentinel-2, Leaflet |
