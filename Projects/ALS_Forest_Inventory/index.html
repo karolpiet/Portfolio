@@ -42,13 +42,21 @@
 
   <section class="interactive-map-section">
     <div class="interactive-map-header">
-      <h2><i class="fas fa-map-marked-alt"></i> How much forest is on your parcel? Anywhere in Poland</h2>
-      <p>Type a parcel ID or zoom in and click a parcel. The boundary comes live from the GUGiK register (ULDK); the canopy height is computed in your browser from the national elevation models (surface model NMPT 0.5 m minus terrain model NMT 1 m, fetched from Geoportal through a small Cloudflare Worker), followed by forest area, tree tops and a timber volume estimate with the same method as the LiDAR processing below. The official stand description comes from the Forest Data Bank (BDL). Try parcel <code>140905_5.0031.129/6</code>.</p>
+      <h2><i class="fas fa-map-marked-alt"></i> How much forest is on a parcel?</h2>
+      <p>Click a cadastral parcel inside the dashed outline (or type its ID, draw an area, upload a KML/GPX/GeoJSON). The parcel boundary comes live from the GUGiK register (ULDK), the forest statistics are computed from the LiDAR models right in your browser, and the official stand description is pulled from the Forest Data Bank (BDL). Try parcel <code>140905_5.0031.129/6</code>.</p>
     </div>
     <div class="map-frame-wrapper app-wrapper">
       <iframe src="app.html" class="map-frame" title="Forest on a parcel – interactive calculator" loading="lazy"></iframe>
     </div>
     <a href="app.html" target="_blank" class="map-fullscreen-link"><i class="fas fa-up-right-from-square"></i> Open the calculator full-screen</a>
+  </section>
+
+  <section class="interactive-map-section">
+    <div class="interactive-map-header">
+      <h2><i class="fas fa-map"></i> Check any forest in Poland</h2>
+      <p>The same calculation for any cadastral parcel, State Forests subcompartment or your own shape anywhere in the country, as a separate site in English, Polish and German. Instead of my own point cloud, the canopy height is built on the fly from the national elevation models (surface model NMPT 0.5 m minus terrain model NMT 1 m), downloaded from Geoportal for the selected parcel through a small Cloudflare Worker, because the GUGiK service cannot be read directly from a browser.</p>
+    </div>
+    <a href="https://karolpiet.github.io/Forest_volume/" target="_blank" class="map-fullscreen-link"><i class="fas fa-up-right-from-square"></i> Open the calculator for any parcel in Poland</a>
   </section>
 
   <section class="interactive-map-section">
@@ -77,7 +85,7 @@
           <li><strong>Individual trees:</strong> tree tops are local maxima of the smoothed CHM with a search window that grows with tree height; crowns are delineated with marker-controlled watershed segmentation.</li>
           <li><strong>Crown closure:</strong> for each crown, the share of first laser returns that stopped in the crown instead of reaching the ground. Open crowns mark stand edges, gaps and weaker trees.</li>
           <li><strong>Timber volume:</strong> two independent estimates. A) sum over detected trees, with DBH from a height–diameter relation for pine and a stem form factor. B) area-based: canopy height (95th percentile) × closure × an assumed basal area of 28 m²/ha, in 20 × 20 m cells. The truth is usually between them.</li>
-          <li><strong>Web version for the whole country:</strong> the parcel calculation was ported to JavaScript (it reproduces the Python tool to within 0.1% on five test areas) and then extended to any parcel in Poland. Instead of my own point cloud it builds the canopy height model on the fly from the national surface and terrain models, which are themselves derived from the same kind of airborne laser scanning.</li>
+          <li><strong>Web version:</strong> the models are packed into compact binary files (CHM at 0.5 m, 70,554 trees) and the parcel calculation was ported to JavaScript. It reproduces the Python tool to within 0.1% on five test areas.</li>
         </ol>
 
         <figure>
