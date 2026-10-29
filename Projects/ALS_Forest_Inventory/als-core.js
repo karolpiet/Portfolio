@@ -291,5 +291,6 @@
   }
 
   ALS.core = { compute, loadChm, loadTrees, parcelByXY, parcelById, bdl, parseFile, parseWkt,
-    toPL, toWGS, polyArea, bbox, treeVolume, H_FOREST, G_HA };
+    toPL, toWGS, polyArea, bbox, treeVolume, rasterize, percentile, rings, contains,
+    H_FOREST, H_SHRUB, G_HA, CELL };
 })(typeof window !== 'undefined' ? window : globalThis);

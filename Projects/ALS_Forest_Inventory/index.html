@@ -53,6 +53,14 @@
 
   <section class="interactive-map-section">
     <div class="interactive-map-header">
+      <h2><i class="fas fa-map"></i> Check any forest in Poland</h2>
+      <p>The same calculation for any cadastral parcel in the country. Instead of my own point cloud, the canopy height is built on the fly from the national elevation models (surface model NMPT 0.5 m minus terrain model NMT 1 m), downloaded from Geoportal for the selected parcel through a small Cloudflare Worker, because the GUGiK service cannot be read directly from a browser.</p>
+    </div>
+    <a href="poland.html" target="_blank" class="map-fullscreen-link"><i class="fas fa-up-right-from-square"></i> Open the calculator for any parcel in Poland</a>
+  </section>
+
+  <section class="interactive-map-section">
+    <div class="interactive-map-header">
       <h2><i class="fas fa-cube"></i> Explore the point cloud in 3D</h2>
       <p>A 180 × 180 m sample of the classified point cloud (thinned to 320,000 points). Colour it by segmented tree, height above ground, orthophoto colour, class or crown closure. Drag to rotate, right-drag to pan, scroll to zoom.</p>
     </div>
